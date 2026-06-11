@@ -164,6 +164,121 @@
   
   /* INDICADOR MODO FIREBASE */
   #db-status-bar { background: var(--blue-dim); border-bottom: 1px solid rgba(59,130,246,0.3); padding: 4px 16px; text-align: center; font-size: 11px; font-weight: 600; color: #93c5fd; display: none; }
+
+  /* EMOJI EN PRODUCTO */
+  .prod-emoji { font-size: 28px; line-height: 1; margin-bottom: 6px; display: block; }
+  .prod-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px; line-height: 16px; }
+  .prod-price-pg { font-size: 11px; color: var(--amber); margin-top: 2px; }
+
+  /* TOGGLE PRECIO MODO */
+  .price-mode-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); gap: 10px; }
+  .price-mode-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .price-toggle { display: flex; background: var(--surface2); border-radius: 20px; padding: 3px; border: 1px solid var(--border); gap: 2px; }
+  .price-toggle-btn { padding: 5px 14px; border-radius: 16px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text2); }
+  .price-toggle-btn.active-cf { background: var(--green); color: white; }
+  .price-toggle-btn.active-pg { background: var(--amber); color: white; }
+  .price-mode-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+  .price-mode-badge.cf { background: var(--green-dim); color: var(--green); }
+  .price-mode-badge.pg { background: var(--amber-dim); color: var(--amber); }
+
+  /* EMOJI PICKER */
+  .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; max-height: 80px; overflow-y: auto; }
+  .emoji-opt { font-size: 20px; cursor: pointer; padding: 4px 6px; border-radius: 6px; border: 1px solid transparent; transition: all 0.1s; }
+  .emoji-opt:hover { background: var(--surface2); border-color: var(--border); }
+  .emoji-opt.selected { background: var(--blue-dim); border-color: rgba(59,130,246,0.4); }
+  .emoji-display-btn { font-size: 22px; cursor: pointer; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; display: inline-block; }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE — TABLET & MOBILE
+  ══════════════════════════════════════ */
+
+  /* Tablet: nav horizontal abajo, grid se adapta */
+  @media (max-width: 900px) {
+    body { overflow: hidden; }
+    .main-container { flex-direction: column; }
+
+    /* Nav horizontal en la parte inferior */
+    nav {
+      width: 100%; height: 60px; flex-direction: row;
+      padding: 0 12px; border-right: none;
+      border-top: 1px solid var(--border);
+      order: 2; gap: 0; justify-content: space-around;
+    }
+    .nav-btn { width: auto; height: 52px; flex-direction: row; gap: 6px; padding: 0 14px; }
+    .nav-btn svg { margin-bottom: 0; width: 18px; height: 18px; }
+    .nav-btn span { font-size: 12px; }
+
+    .content { order: 1; overflow: hidden; }
+
+    /* POS en tablet: catálogo arriba, carrito abajo como panel deslizable */
+    .pos-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+    }
+    .catalog-side {
+      padding: 10px;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .cart-side {
+      max-height: 42vh;
+      border-top: 2px solid var(--border2);
+    }
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+    .price-mode-bar { padding: 6px 10px; }
+    .price-mode-label-text { display: none; }
+  }
+
+  /* Mobile: layout completamente vertical */
+  @media (max-width: 600px) {
+    header { padding: 8px 12px; }
+    .brand { font-size: 15px; }
+
+    .pos-grid {
+      grid-template-rows: 1fr 280px;
+    }
+    .catalog-side { padding: 8px; }
+    .cart-side { max-height: 280px; }
+
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 6px;
+    }
+    .prod-card { padding: 8px; }
+    .prod-emoji { font-size: 22px; }
+    .prod-name { font-size: 11px; height: 28px; }
+    .prod-price { font-size: 13px; }
+
+    .cart-summary { padding: 10px 12px; gap: 6px; }
+    .summary-row { font-size: 13px; }
+    .summary-row.total { font-size: 16px; }
+    .pay-btn { padding: 11px; font-size: 13px; }
+
+    .price-mode-bar { flex-wrap: wrap; gap: 6px; }
+    .price-toggle-btn { padding: 5px 10px; font-size: 11px; }
+
+    /* Modal ocupa más pantalla en móvil */
+    .modal-card { max-width: 100% !important; margin: 0; border-radius: var(--radius) var(--radius) 0 0; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal-body { max-height: 70vh; overflow-y: auto; }
+
+    /* Tabla de inventario scroll horizontal */
+    .table-container { padding: 8px; }
+    table { font-size: 12px; min-width: 600px; }
+    .table-container { overflow-x: auto; }
+
+    nav { height: 56px; }
+    .nav-btn span { font-size: 10px; }
+  }
+
+  /* Desktop grande: carrito más ancho */
+  @media (min-width: 1200px) {
+    .pos-grid { grid-template-columns: 1fr 420px; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
 </style>
 </head>
 <body>
@@ -214,6 +329,16 @@
     <div id="screen-pos" class="screen active">
       <div class="pos-grid">
         <div class="catalog-side">
+          <div class="price-mode-bar">
+            <span class="price-mode-label" id="price-mode-label-text">Modo precio:</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="price-mode-badge cf" id="price-mode-badge">★ Frecuente</span>
+              <div class="price-toggle">
+                <button class="price-toggle-btn active-cf" id="toggle-cf">★ Frecuente</button>
+                <button class="price-toggle-btn" id="toggle-pg">🌐 Público</button>
+              </div>
+            </div>
+          </div>
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input type="text" id="search-input" placeholder="Buscar por nombre o código de barras... [Espacio]">
@@ -254,10 +379,12 @@
           <table>
             <thead>
               <tr>
+                <th>Ícono</th>
                 <th>Código</th>
                 <th>Nombre</th>
                 <th>Categoría</th>
-                <th>Precio Público (c/IVA)</th>
+                <th>★ P. Frecuente</th>
+                <th>P. Público</th>
                 <th>Stock</th>
                 <th>Acciones</th>
               </tr>
@@ -284,6 +411,15 @@
     <div class="modal-body">
       <input type="hidden" id="form-id">
       <div class="form-group">
+        <label>Ícono del Producto</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="emoji-display-btn" id="emoji-display">🛍️</span>
+          <span style="font-size:12px; color:var(--text3);">Toca para cambiar</span>
+        </div>
+        <div class="emoji-picker-row" id="emoji-picker" style="display:none;"></div>
+        <input type="hidden" id="form-emoji" value="🛍️">
+      </div>
+      <div class="form-group">
         <label>Código de Barras / Único</label>
         <input type="text" id="form-code" placeholder="Ej. 750100000000">
       </div>
@@ -295,9 +431,17 @@
         <label>Categoría</label>
         <select id="form-category"></select>
       </div>
-      <div class="form-group">
-        <label>Precio Final al Público (Con IVA incluido)</label>
-        <input type="number" step="0.01" id="form-price" placeholder="0.00">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>★ Precio Cliente Frecuente (c/IVA)</label>
+          <input type="number" step="0.01" id="form-price" placeholder="0.00">
+          <div style="font-size:11px; color:var(--green); margin-top:3px;">Precio normal / preferencial</div>
+        </div>
+        <div class="form-group">
+          <label>Precio Público General (c/IVA)</label>
+          <input type="number" step="0.01" id="form-price-pg" placeholder="0.00">
+          <div style="font-size:11px; color:var(--amber); margin-top:3px;">Auto: frecuente + diferencial</div>
+        </div>
       </div>
       <div class="form-group">
         <label>Cantidad en Stock</label>
@@ -399,6 +543,75 @@
 
   const categories = ["Todos", "Abarrotes", "Bebidas", "Snacks", "Lácteos", "Limpieza", "Otros"];
   let activeCategory = "Todos";
+  let priceMode = 'cf'; // 'cf' = cliente frecuente, 'pg' = público general
+
+  const PRICE_DIFF_DEFAULT = 2;
+
+  function setPriceMode(mode) {
+    priceMode = mode;
+    const badgeEl = document.getElementById('price-mode-badge');
+    const btnCF = document.getElementById('toggle-cf');
+    const btnPG = document.getElementById('toggle-pg');
+    if(mode === 'cf') {
+      badgeEl.textContent = '★ Frecuente';
+      badgeEl.className = 'price-mode-badge cf';
+      btnCF.className = 'price-toggle-btn active-cf';
+      btnPG.className = 'price-toggle-btn';
+    } else {
+      badgeEl.textContent = '🌐 Público';
+      badgeEl.className = 'price-mode-badge pg';
+      btnCF.className = 'price-toggle-btn';
+      btnPG.className = 'price-toggle-btn active-pg';
+    }
+    renderCatalog();
+    renderCart();
+  }
+
+  // Wire toggle buttons via addEventListener (module scope safe)
+  document.getElementById('toggle-cf').addEventListener('click', () => setPriceMode('cf'));
+  document.getElementById('toggle-pg').addEventListener('click', () => setPriceMode('pg'));
+
+  function getActivePrice(p) {
+    if(priceMode === 'pg' && p.pricePG != null) return Number(p.pricePG);
+    return Number(p.price || 0);
+  }
+
+  // Emoji picker
+  const EMOJIS = ['🛍️','🥤','💧','🧃','🍺','🥔','🌽','🍰','🥛','🍶','🧀','🥚','🍚','🫘','🫙','🧼','🧴','☕','🌮','🥪','🍕','🍔','🌯','🍱','🥗','🧁','🍫','🍬','🍩','🥐','🥜','🌶️','🧅','🥦','🥬','🥕','🍅','🍋','🍊','🍇','🍓','🍌','🍉','🍒','🏪','📦','🎁'];
+  let selectedEmoji = '🛍️';
+
+  function toggleEmojiPicker() {
+    const picker = document.getElementById('emoji-picker');
+    if(picker.style.display === 'none' || picker.style.display === '') {
+      picker.style.display = 'flex';
+      picker.innerHTML = EMOJIS.map(e =>
+        `<span class="emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</span>`
+      ).join('');
+      // Wire clicks inside picker
+      picker.querySelectorAll('.emoji-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          selectedEmoji = el.dataset.emoji;
+          document.getElementById('emoji-display').textContent = selectedEmoji;
+          document.getElementById('form-emoji').value = selectedEmoji;
+          picker.style.display = 'none';
+        });
+      });
+    } else {
+      picker.style.display = 'none';
+    }
+  }
+
+  document.getElementById('emoji-display').addEventListener('click', toggleEmojiPicker);
+
+  function autoFillPricePG() {
+    const cf = parseFloat(document.getElementById('form-price').value) || 0;
+    const pgField = document.getElementById('form-price-pg');
+    if(cf > 0 && (!pgField.value || Math.abs(parseFloat(pgField.value) - (cf + PRICE_DIFF_DEFAULT)) < 5)) {
+      pgField.value = (cf + PRICE_DIFF_DEFAULT).toFixed(2);
+    }
+  }
+
+  document.getElementById('form-price').addEventListener('input', autoFillPricePG);
 
   // Control de interfaz
   onAuthStateChanged(auth, async (user) => {
@@ -508,7 +721,7 @@
     
     let filtered = products.filter(p => {
       const matchCat = (activeCategory === "Todos" || p.category === activeCategory);
-      const matchSearch = p.name.toLowerCase().includes(queryStr) || p.code.includes(queryStr);
+      const matchSearch = p.name.toLowerCase().includes(queryStr) || (p.code||'').includes(queryStr);
       return matchCat && matchSearch;
     });
 
@@ -519,11 +732,20 @@
 
     container.innerHTML = filtered.map(p => {
       const isLow = p.stock <= 3;
+      const activePrice = getActivePrice(p);
+      const altPrice = priceMode === 'cf'
+        ? `<div class="prod-price-pg">Público: $${Number(p.pricePG || (Number(p.price||0) + PRICE_DIFF_DEFAULT)).toFixed(2)}</div>`
+        : `<div class="prod-price-pg" style="color:var(--green);">★ Frec: $${Number(p.price||0).toFixed(2)}</div>`;
+      const emoji = p.emoji || '🛍️';
       return `
         <div class="prod-card" data-id="${p.id}">
+          <span class="prod-emoji">${emoji}</span>
           <div class="prod-name">${p.name}</div>
           <div class="prod-footer">
-            <div class="prod-price">$${Number(p.price || 0).toFixed(2)}</div>
+            <div>
+              <div class="prod-price">$${activePrice.toFixed(2)}</div>
+              ${altPrice}
+            </div>
             <div class="prod-stock ${isLow ? 'low' : ''}">${p.stock} pz</div>
           </div>
         </div>
@@ -558,13 +780,15 @@
 
     container.innerHTML = cart.map(item => {
       totalCount += item.qty;
-      const itemTotal = item.product.price * item.qty;
+      const unitPrice = getActivePrice(item.product);
+      const itemTotal = unitPrice * item.qty;
       finalTotal += itemTotal;
+      const emoji = item.product.emoji || '🛍️';
       return `
         <div class="cart-item">
           <div class="item-info">
-            <div class="item-name">${item.product.name}</div>
-            <div class="item-price">$${Number(item.product.price).toFixed(2)}</div>
+            <div class="item-name">${emoji} ${item.product.name}</div>
+            <div class="item-price">$${unitPrice.toFixed(2)} ${priceMode === 'pg' ? '<span style="color:var(--amber);font-size:10px;">PÚBLICO</span>' : ''}</div>
           </div>
           <div class="item-actions">
             <div class="qty-btn dec" data-id="${item.product.id}">-</div>
@@ -597,15 +821,20 @@
   function renderAdminTable() {
     const container = document.getElementById('admin-table-body');
     if(products.length === 0) {
-      container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text3); padding:20px;">No hay productos registrados</td></tr>`;
+      container.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text3); padding:20px;">No hay productos registrados</td></tr>`;
       return;
     }
-    container.innerHTML = products.map(p => `
+    container.innerHTML = products.map(p => {
+      const pricePG = Number(p.pricePG || (Number(p.price||0) + PRICE_DIFF_DEFAULT)).toFixed(2);
+      const emoji = p.emoji || '🛍️';
+      return `
       <tr>
+        <td style="font-size:22px; text-align:center;">${emoji}</td>
         <td style="font-family:monospace; font-weight:600;">${p.code}</td>
         <td style="font-weight:600;">${p.name}</td>
         <td><span style="background:var(--surface2); padding:4px 8px; border-radius:4px; font-size:12px;">${p.category}</span></td>
         <td style="color:var(--green); font-weight:700;">$${Number(p.price || 0).toFixed(2)}</td>
+        <td style="color:var(--amber); font-weight:700;">$${pricePG}</td>
         <td style="font-weight:700;">${p.stock} pz</td>
         <td>
           <div class="actions-cell">
@@ -614,7 +843,7 @@
           </div>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
 
     container.querySelectorAll('.action-icon.edit').forEach(btn => {
       btn.addEventListener('click', () => openEditModal(btn.dataset.id));
@@ -639,13 +868,14 @@
       
       const itemsSummary = s.items.map(i => `
         <div class="hist-detail-item">
-          <span>${i.name} (x${i.qty})</span>
+          <span>${i.emoji || '🛍️'} ${i.name} (x${i.qty})</span>
           <span>$${Number(i.price * i.qty).toFixed(2)}</span>
         </div>
       `).join('');
 
       const modeRow = `<div class="hist-detail-item" style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); font-weight:600;"><span>Subtotal General</span><span>$${Number(s.subtotal||0).toFixed(2)}</span></div>
-                       <div class="hist-detail-item" style="font-weight:600;"><span>IVA Trasladado (16%)</span><span>$${Number(s.iva||0).toFixed(2)}</span></div>`;
+                       <div class="hist-detail-item" style="font-weight:600;"><span>IVA Trasladado (16%)</span><span>$${Number(s.iva||0).toFixed(2)}</span></div>
+                       ${s.priceMode === 'pg' ? '<div class="hist-detail-item" style="color:var(--amber);"><span>Modo precio</span><span>🌐 Público General</span></div>' : ''}`;
       
       const cashRow = s.method === 'cash' ? `
         <div class="hist-detail-item" style="color:var(--text3)"><span>Efectivo entregado</span><span>$${s.received.toFixed(2)}</span></div>
@@ -707,17 +937,18 @@
   // Procesar Transacciones de Ventas
   async function submitTransaction(method, received = 0, change = 0) {
     let finalTotal = 0;
-    cart.forEach(i => finalTotal += (i.product.price * i.qty));
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
     
     const subtotal = finalTotal / 1.16;
     const iva = finalTotal - subtotal;
 
     const saleData = {
-      items: cart.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, qty: i.qty })),
+      items: cart.map(i => ({ id: i.product.id, name: i.product.name, emoji: i.product.emoji || '🛍️', price: getActivePrice(i.product), qty: i.qty })),
       total: finalTotal,
       subtotal: subtotal,
       iva: iva,
       method: method,
+      priceMode: priceMode,
       received: received,
       change: change,
       timestamp: DEMO_MODE ? Date.now() : new Date()
@@ -765,7 +996,7 @@
   // Modal de Efectivo Interno
   function openCashModal() {
     let finalTotal = 0;
-    cart.forEach(i => finalTotal += (i.product.price * i.qty));
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
     
     document.getElementById('cash-modal-total').innerText = `$${finalTotal.toFixed(2)}`;
     document.getElementById('cash-received').value = '';
@@ -777,7 +1008,7 @@
 
   function calculateChange() {
     let finalTotal = 0;
-    cart.forEach(i => finalTotal += (i.product.price * i.qty));
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
     const rec = parseFloat(document.getElementById('cash-received').value) || 0;
     const change = rec - finalTotal;
     
@@ -797,7 +1028,12 @@
     document.getElementById('form-code').value = '';
     document.getElementById('form-name').value = '';
     document.getElementById('form-price').value = '';
+    document.getElementById('form-price-pg').value = '';
     document.getElementById('form-stock').value = '';
+    selectedEmoji = '🛍️';
+    document.getElementById('emoji-display').textContent = '🛍️';
+    document.getElementById('form-emoji').value = '🛍️';
+    document.getElementById('emoji-picker').style.display = 'none';
     
     const sel = document.getElementById('form-category');
     sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `<option value="${c}">${c}</option>`).join('');
@@ -814,7 +1050,12 @@
     document.getElementById('form-code').value = p.code;
     document.getElementById('form-name').value = p.name;
     document.getElementById('form-price').value = p.price;
+    document.getElementById('form-price-pg').value = p.pricePG != null ? p.pricePG : (Number(p.price||0) + PRICE_DIFF_DEFAULT).toFixed(2);
     document.getElementById('form-stock').value = p.stock;
+    selectedEmoji = p.emoji || '🛍️';
+    document.getElementById('emoji-display').textContent = selectedEmoji;
+    document.getElementById('form-emoji').value = selectedEmoji;
+    document.getElementById('emoji-picker').style.display = 'none';
     
     const sel = document.getElementById('form-category');
     sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `
@@ -834,7 +1075,7 @@
 
     if(!code || !name || price <= 0) return showToast("Por favor ingresa datos válidos");
 
-    const pData = { code, name, category, price, stock };
+    const pData = { code, name, category, price, pricePG: parseFloat(document.getElementById('form-price-pg').value) || (price + PRICE_DIFF_DEFAULT), stock, emoji: document.getElementById('form-emoji').value || '🛍️' };
 
     if(DEMO_MODE) {
       if(id) {
@@ -914,7 +1155,7 @@
   
   document.getElementById('cash-confirm-btn').addEventListener('click', async () => {
     let finalTotal = 0;
-    cart.forEach(i => finalTotal += (i.product.price * i.qty));
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
     const rec = parseFloat(document.getElementById('cash-received').value) || 0;
     const change = rec - finalTotal;
     
