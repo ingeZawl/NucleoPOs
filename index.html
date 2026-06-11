@@ -279,6 +279,45 @@
     .pos-grid { grid-template-columns: 1fr 420px; }
     .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   }
+
+  /* CORRECCIÓN MÓVILES ALTOS: botones de cobro siempre visibles */
+  @media (max-width: 900px) {
+    .cart-side { display: flex; flex-direction: column; flex-shrink: 0; }
+    .cart-items { flex: 1; min-height: 0; max-height: 28vh; }
+    .cart-summary { flex-shrink: 0; }
+    .pos-grid { grid-template-rows: 1fr auto !important; max-height: 100%; }
+  }
+  @media (max-width: 600px) {
+    .cart-items { max-height: 22vh; }
+    .pay-btn { padding: 13px 8px !important; font-size: 13px !important; }
+    .pay-grid { gap: 8px; }
+    .cart-summary { padding: 10px 12px; }
+  }
+  @media (min-height: 800px) and (max-width: 900px) {
+    .cart-items { max-height: 32vh; }
+  }
+  @media (min-height: 900px) and (max-width: 900px) {
+    .cart-items { max-height: 36vh; }
+  }
+
+  /* CORTE DEL DIA */
+  .corte-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .corte-card-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .corte-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .corte-row:last-child { border-bottom: none; }
+  .corte-row-label { color: var(--text2); }
+  .corte-row-value { font-weight: 700; color: var(--text); }
+  .corte-big { font-size: 28px; font-weight: 800; color: var(--green); text-align:center; padding: 8px 0; }
+  .corte-resumen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 500px) { .corte-resumen-grid { grid-template-columns: 1fr; } }
+  .corte-stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+  .corte-stat-num { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .corte-stat-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  @media print {
+    nav, header, .admin-header { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .corte-card { border: 1px solid #ccc !important; background: white !important; }
+  }
 </style>
 </head>
 <body>
@@ -321,6 +360,10 @@
     <div class="nav-btn" data-screen="history">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       <span>Historial</span>
+    </div>
+    <div class="nav-btn" data-screen="corte" id="nav-corte-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span>Corte</span>
     </div>
   </nav>
 
@@ -397,6 +440,19 @@
 
     <div id="screen-history" class="screen" style="flex-direction:column; padding:16px; overflow-y:auto; gap:10px;">
       <div id="hist-list"></div>
+    </div>
+
+    <!-- CORTE DEL DIA -->
+    <div id="screen-corte" class="screen" style="flex-direction:column; overflow:hidden;">
+      <div class="admin-header">
+        <div class="admin-title">Corte del Día</div>
+        <button class="btn-primary" id="print-corte-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimir Corte
+        </button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:16px;" id="corte-content">
+      </div>
     </div>
 
   </div>
@@ -495,6 +551,31 @@
   </div>
 </div>
 
+<!-- APERTURA DE CAJA -->
+<div class="modal-overlay" id="apertura-modal" style="z-index:2500;">
+  <div class="modal-card" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-title">🏪 Apertura de Caja</div>
+    </div>
+    <div class="modal-body" style="gap:18px;">
+      <div style="text-align:center; padding:8px 0;">
+        <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Ingresa el cambio inicial con el que abre la caja hoy</div>
+        <div style="font-size:12px; color:var(--text3);" id="apertura-fecha"></div>
+      </div>
+      <div class="form-group">
+        <label>Cambio Inicial en Caja (efectivo)</label>
+        <input type="number" step="0.01" id="apertura-monto" style="font-size:24px; text-align:center; font-weight:800; padding:14px;" placeholder="0.00" autofocus>
+      </div>
+      <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:6px; padding:10px 14px; font-size:12px; color:var(--text2); line-height:1.6;">
+        Este monto quedará registrado en el corte del día para cuadrar el efectivo final.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="apertura-confirm-btn" style="width:100%; justify-content:center; padding:13px; font-size:15px;">✓ Abrir Caja</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script type="importmap">
@@ -533,6 +614,8 @@
     document.getElementById('db-status-bar').style.display = 'block';
   } else {
     document.getElementById('login-overlay').style.display = 'none';
+    // En modo demo, mostrar apertura al cargar
+    setTimeout(() => showAperturaModal(), 300);
   }
 
   // Estructuras de datos locales
@@ -541,7 +624,7 @@
   let sales = [];
   let currentUser = null;
 
-  const categories = ["Todos", "Abarrotes", "Bebidas", "Snacks", "Lácteos", "Limpieza", "Otros"];
+  const categories = ["Todos", "Abarrotes", "Bebidas", "Snacks", "Dulces", "Helados", "Higiene", "Otros"];
   let activeCategory = "Todos";
   let priceMode = 'cf'; // 'cf' = cliente frecuente, 'pg' = público general
 
@@ -631,6 +714,7 @@
       
       showToast(`Bienvenido, ${currentUser.email}`);
       await loadData();
+      showAperturaModal();
     } else {
       currentUser = null;
       document.getElementById('login-overlay').style.display = 'flex';
@@ -1130,6 +1214,140 @@
   }
 
   // Atajos de Teclado Globales y Enrutamiento de Pantallas
+  // ═══════════════════════════════════════════
+  //  APERTURA DE CAJA
+  // ═══════════════════════════════════════════
+  let aperturaMonto = 0;
+
+  function showAperturaModal() {
+    const now = new Date();
+    document.getElementById('apertura-fecha').textContent = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    // Check if already opened today
+    const lastApertura = localStorage.getItem('pos_apertura_date');
+    const todayStr = now.toDateString();
+    if (lastApertura === todayStr) {
+      aperturaMonto = parseFloat(localStorage.getItem('pos_apertura_monto') || 0);
+      return; // ya se abrió hoy, no mostrar
+    }
+    document.getElementById('apertura-monto').value = '';
+    document.getElementById('apertura-modal').classList.add('open');
+    setTimeout(() => document.getElementById('apertura-monto').focus(), 200);
+  }
+
+  document.getElementById('apertura-confirm-btn').addEventListener('click', () => {
+    const monto = parseFloat(document.getElementById('apertura-monto').value) || 0;
+    aperturaMonto = monto;
+    const todayStr = new Date().toDateString();
+    localStorage.setItem('pos_apertura_date', todayStr);
+    localStorage.setItem('pos_apertura_monto', monto);
+    document.getElementById('apertura-modal').classList.remove('open');
+    showToast('Caja abierta con $' + monto.toFixed(2) + ' de cambio inicial');
+  });
+
+  // ═══════════════════════════════════════════
+  //  CORTE DEL DIA
+  // ═══════════════════════════════════════════
+  function renderCorte() {
+    const container = document.getElementById('corte-content');
+    const now = new Date();
+    const todayStr = now.toDateString();
+
+    // Filter sales from today
+    const todaySales = sales.filter(s => {
+      let d = s.timestamp?.seconds ? new Date(s.timestamp.seconds * 1000) : new Date(s.timestamp || 0);
+      return d.toDateString() === todayStr;
+    });
+
+    const totalVentas = todaySales.reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalEfectivo = todaySales.filter(s => s.method === 'cash').reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalTarjeta = todaySales.filter(s => s.method === 'card').reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalIVA = todaySales.reduce((acc, s) => acc + Number(s.iva || 0), 0);
+    const totalSubtotal = todaySales.reduce((acc, s) => acc + Number(s.subtotal || 0), 0);
+    const numTransacciones = todaySales.length;
+    const numEfectivo = todaySales.filter(s => s.method === 'cash').length;
+    const numTarjeta = todaySales.filter(s => s.method === 'card').length;
+    const cambioInicial = parseFloat(localStorage.getItem('pos_apertura_monto') || 0);
+    const efectivoEnCaja = cambioInicial + totalEfectivo;
+
+    // Top products
+    const prodMap = {};
+    todaySales.forEach(s => {
+      (s.items || []).forEach(item => {
+        if (!prodMap[item.name]) prodMap[item.name] = { qty: 0, total: 0, emoji: item.emoji || 'X' };
+        prodMap[item.name].qty += item.qty;
+        prodMap[item.name].total += item.price * item.qty;
+      });
+    });
+    const topProds = Object.entries(prodMap).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+
+    const fechaStr = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const horaStr = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+
+    container.innerHTML = `
+      <div style="text-align:center; padding:8px 0 4px;">
+        <div style="font-size:16px; font-weight:800; text-transform:capitalize;">${fechaStr}</div>
+        <div style="font-size:12px; color:var(--text3); margin-top:2px;">Generado a las ${horaStr}</div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">💰 Resumen de Ventas del Día</div>
+        <div class="corte-big">$${totalVentas.toFixed(2)}</div>
+        <div class="corte-resumen-grid" style="margin-top:12px;">
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--green);">${numTransacciones}</div>
+            <div class="corte-stat-label">Transacciones</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--blue);">$${(numTransacciones > 0 ? totalVentas/numTransacciones : 0).toFixed(2)}</div>
+            <div class="corte-stat-label">Ticket Promedio</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--green);">$${totalEfectivo.toFixed(2)}</div>
+            <div class="corte-stat-label">Efectivo (${numEfectivo} ventas)</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--blue);">$${totalTarjeta.toFixed(2)}</div>
+            <div class="corte-stat-label">Tarjeta (${numTarjeta} ventas)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">🧾 Desglose Fiscal</div>
+        <div class="corte-row"><span class="corte-row-label">Subtotal (sin IVA)</span><span class="corte-row-value">$${totalSubtotal.toFixed(2)}</span></div>
+        <div class="corte-row"><span class="corte-row-label">IVA Trasladado (16%)</span><span class="corte-row-value" style="color:var(--amber);">$${totalIVA.toFixed(2)}</span></div>
+        <div class="corte-row" style="padding-top:10px; border-top:1px solid var(--border2);"><span class="corte-row-label" style="font-weight:700;">Total con IVA</span><span class="corte-row-value" style="color:var(--green); font-size:16px;">$${totalVentas.toFixed(2)}</span></div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">🪙 Efectivo en Caja</div>
+        <div class="corte-row"><span class="corte-row-label">Cambio inicial (apertura)</span><span class="corte-row-value">$${cambioInicial.toFixed(2)}</span></div>
+        <div class="corte-row"><span class="corte-row-label">Ventas en efectivo del día</span><span class="corte-row-value">$${totalEfectivo.toFixed(2)}</span></div>
+        <div class="corte-row" style="padding-top:10px; border-top:1px solid var(--border2);"><span class="corte-row-label" style="font-weight:700;">Total esperado en caja</span><span class="corte-row-value" style="color:var(--green); font-size:16px;">$${efectivoEnCaja.toFixed(2)}</span></div>
+      </div>
+
+      ${topProds.length > 0 ? `
+      <div class="corte-card">
+        <div class="corte-card-title">🏆 Productos Más Vendidos</div>
+        ${topProds.map(([name, data], i) => `
+          <div class="corte-row">
+            <span class="corte-row-label">${i+1}. ${data.emoji} ${name}</span>
+            <span class="corte-row-value">${data.qty} pz — $${data.total.toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>` : ''}
+
+      ${todaySales.length === 0 ? '<div style="text-align:center; padding:40px; color:var(--text3);">No hay ventas registradas hoy</div>' : ''}
+    `;
+  }
+
+  document.getElementById('print-corte-btn').addEventListener('click', () => {
+    window.print();
+  });
+
+  // ═══════════════════════════════════════════
+  //  NAV ROUTING (original + corte)
+  // ═══════════════════════════════════════════
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1137,6 +1355,7 @@
       
       btn.classList.add('active');
       document.getElementById(`screen-${btn.dataset.screen}`).classList.add('active');
+      if (btn.dataset.screen === 'corte') renderCorte();
     });
   });
 
@@ -1188,6 +1407,9 @@
       document.getElementById('add-modal').classList.remove('open');
       document.getElementById('user-modal').classList.remove('open');
       document.getElementById('cash-modal').classList.remove('open');
+      // apertura-modal: solo cerrar si ya tiene monto guardado
+      const ap = document.getElementById('apertura-modal');
+      if(ap.classList.contains('open') && localStorage.getItem('pos_apertura_date') === new Date().toDateString()) ap.classList.remove('open');
     }
   });
 </script>
