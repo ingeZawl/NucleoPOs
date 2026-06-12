@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Núcleo POS Firebase</title>
+<style>
+  :root {
+    --bg: #0D0F14;
+    --surface: #161A23;
+    --surface2: #1E2433;
+    --surface3: #252D3D;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #F0F2F5;
+    --text2: #8B95A8;
+    --text3: #5A6478;
+    --blue: #3B82F6;
+    --blue-dim: rgba(59,130,246,0.15);
+    --blue-dim2: rgba(59,130,246,0.25);
+    --green: #22C55E;
+    --green-dim: rgba(34,197,94,0.15);
+    --amber: #F59E0B;
+    --amber-dim: rgba(245,158,11,0.15);
+    --red: #EF4444;
+    --red-dim: rgba(239,68,68,0.15);
+    --shadow: rgba(0,0,0,0.4);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  header { background: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 2px 8px var(--shadow); }
+  .brand { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .brand span { color: var(--blue); }
+  .user-badge { background: var(--surface2); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer; border: 1px solid var(--border); }
+  .user-badge::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; }
+  
+  .main-container { display: flex; flex: 1; overflow: hidden; }
+  nav { background: var(--surface); width: 72px; display: flex; flex-direction: column; align-items: center; padding: 16px 0; border-right: 1px solid var(--border); gap: 16px; }
+  .nav-btn { width: 48px; height: 48px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: var(--radius); cursor: pointer; color: var(--text2); transition: all 0.2s; position: relative; }
+  .nav-btn svg { width: 22px; height: 22px; margin-bottom: 2px; }
+  .nav-btn span { font-size: 10px; font-weight: 500; }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--blue-dim); color: var(--blue); }
+  
+  .content { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+  .screen { display: none; height: 100%; width: 100%; overflow: hidden; }
+  .screen.active { display: flex; }
+  
+  /* POS SCREEN */
+  .pos-grid { display: grid; grid-template-columns: 1fr 380px; width: 100%; height: 100%; overflow: hidden; }
+  .catalog-side { display: flex; flex-direction: column; overflow: hidden; padding: 16px; border-right: 1px solid var(--border); }
+  .search-bar { background: var(--surface); padding: 4px 12px; border-radius: var(--radius); display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); margin-bottom: 16px; }
+  .search-bar svg { color: var(--text3); width: 18px; height: 18px; }
+  .search-bar input { background: transparent; border: none; color: var(--text); flex: 1; padding: 8px 0; font-size: 15px; outline: none; }
+  
+  .categories-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 8px; min-height: 48px; scrollbar-width: none; }
+  .categories-row::-webkit-scrollbar { display: none; }
+  .cat-chip { background: var(--surface); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; border: 1px solid var(--border); color: var(--text2); transition: all 0.2s; }
+  .cat-chip:hover { background: var(--surface2); color: var(--text); }
+  .cat-chip.active { background: var(--blue); color: white; border-color: var(--blue); }
+  
+  .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; overflow-y: auto; flex: 1; padding-bottom: 20px; }
+  .prod-card { background: var(--surface); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); user-select: none; position: relative; overflow: hidden; }
+  .prod-card:hover { transform: translateY(-2px); border-color: var(--border2); background: var(--surface2); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .prod-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 34px; line-height: 17px; }
+  .prod-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+  .prod-price { font-size: 15px; font-weight: 700; color: var(--green); }
+  .prod-stock { font-size: 11px; color: var(--text3); background: rgba(255,255,255,0.04); padding: 2px 6px; border-radius: 4px; }
+  .prod-stock.low { color: var(--red); background: var(--red-dim); }
+  
+  /* CART SIDE */
+  .cart-side { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+  .cart-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .cart-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .cart-count { background: var(--blue-dim2); color: var(--blue); font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .clear-cart { color: var(--text3); cursor: pointer; font-size: 13px; font-weight: 500; transition: color 0.2s; }
+  .clear-cart:hover { color: var(--red); }
+  
+  .cart-items { flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .cart-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); }
+  .item-info { flex: 1; min-width: 0; padding-right: 8px; }
+  .item-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+  .item-price { font-size: 12px; color: var(--text2); }
+  .item-actions { display: flex; align-items: center; gap: 10px; }
+  .qty-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 16px; font-weight: 600; user-select: none; }
+  .qty-btn:hover { background: var(--surface3); }
+  .item-qty { font-size: 13px; font-weight: 700; width: 20px; text-align: center; }
+  .item-total { font-size: 13px; font-weight: 700; color: var(--text); width: 65px; text-align: right; }
+  .cart-empty { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: var(--text3); gap: 12px; }
+  .cart-empty svg { width: 48px; height: 48px; color: rgba(255,255,255,0.03); }
+  
+  .cart-summary { padding: 16px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 10px; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text2); }
+  .summary-row.total { font-size: 18px; font-weight: 800; color: var(--text); margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .summary-row.total span:last-child { color: var(--green); }
+  
+  .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .pay-btn { padding: 14px; border-radius: var(--radius); border: none; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+  .pay-btn.cash { background: var(--green); color: white; }
+  .pay-btn.cash:hover { background: #16a34a; transform: translateY(-1px); }
+  .pay-btn.card { background: var(--blue); color: white; }
+  .pay-btn.card:hover { background: #2563eb; transform: translateY(-1px); }
+  .pay-btn:disabled { background: var(--surface3) !important; color: var(--text3) !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
+  
+  /* TABLES & MANAGEMENT SCREEN */
+  .admin-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .admin-title { font-size: 16px; font-weight: 700; }
+  .btn-primary { background: var(--blue); color: white; padding: 8px 16px; border-radius: var(--radius); border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .btn-primary:hover { background: #2563eb; }
+  
+  .table-container { flex: 1; overflow-y: auto; padding: 16px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  th { background: rgba(255,255,255,0.02); text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.01); }
+  .actions-cell { display: flex; gap: 12px; }
+  .action-icon { cursor: pointer; color: var(--text3); transition: color 0.2s; }
+  .action-icon.edit:hover { color: var(--blue); }
+  .action-icon.delete:hover { color: var(--red); }
+  
+  /* HISTORY SCREEN */
+  .hist-sale { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+  .hist-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .hist-header:hover { background: rgba(255,255,255,0.01); }
+  .hist-time { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .hist-total { font-size: 15px; font-weight: 700; color: var(--green); width: 90px; text-align: right; }
+  .hist-method { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+  .hist-method.cash { background: var(--green-dim); color: var(--green); }
+  .hist-method.card { background: var(--blue-dim); color: var(--blue); }
+  .hist-detail { padding: 16px; background: rgba(0,0,0,0.15); border-top: 1px solid var(--border); display: none; }
+  .hist-detail-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--text2); }
+  .hist-detail-item:last-child { margin-bottom: 0; }
+  
+  /* MODAL */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+  .modal-overlay.open { display: flex; }
+  .modal-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden; animation: modalAnim 0.2s ease-out; }
+  @keyframes modalAnim { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .modal-close { cursor: pointer; color: var(--text3); }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .form-group input, .form-group select { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+  .modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.1); display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 8px 16px; border-radius: var(--radius); font-weight: 600; font-size: 13px; cursor: pointer; }
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+  
+  /* LOGIN OVERLAY */
+  #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:2000; display:flex; justify-content:center; align-items:center; padding:16px; }
+  .login-card { background:var(--surface); border:1px solid var(--border); padding:32px; border-radius:var(--radius); width:100%; max-width:360px; box-shadow:0 8px 24px var(--shadow); }
+  .login-logo { font-size:24px; font-weight:800; text-align:center; margin-bottom:8px; }
+  .login-logo span { color:var(--blue); }
+  .login-sub { text-align:center; color:var(--text3); font-size:13px; margin-bottom:24px; }
+  
+  /* TOAST NOTIFICATION */
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface2); border: 1px solid var(--border2); padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px var(--shadow); z-index: 3000; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; display: flex; align-items: center; gap: 8px; }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  
+  /* INDICADOR MODO FIREBASE */
+  #db-status-bar { background: var(--blue-dim); border-bottom: 1px solid rgba(59,130,246,0.3); padding: 4px 16px; text-align: center; font-size: 11px; font-weight: 600; color: #93c5fd; display: none; }
+
+  /* EMOJI EN PRODUCTO */
+  .prod-emoji { font-size: 28px; line-height: 1; margin-bottom: 6px; display: block; }
+  .prod-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px; line-height: 16px; }
+  .prod-price-pg { font-size: 11px; color: var(--amber); margin-top: 2px; }
+
+  /* TOGGLE PRECIO MODO */
+  .price-mode-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); gap: 10px; }
+  .price-mode-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .price-toggle { display: flex; background: var(--surface2); border-radius: 20px; padding: 3px; border: 1px solid var(--border); gap: 2px; }
+  .price-toggle-btn { padding: 5px 14px; border-radius: 16px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text2); }
+  .price-toggle-btn.active-cf { background: var(--green); color: white; }
+  .price-toggle-btn.active-pg { background: var(--amber); color: white; }
+  .price-mode-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+  .price-mode-badge.cf { background: var(--green-dim); color: var(--green); }
+  .price-mode-badge.pg { background: var(--amber-dim); color: var(--amber); }
+
+  /* EMOJI PICKER */
+  .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; max-height: 80px; overflow-y: auto; }
+  .emoji-opt { font-size: 20px; cursor: pointer; padding: 4px 6px; border-radius: 6px; border: 1px solid transparent; transition: all 0.1s; }
+  .emoji-opt:hover { background: var(--surface2); border-color: var(--border); }
+  .emoji-opt.selected { background: var(--blue-dim); border-color: rgba(59,130,246,0.4); }
+  .emoji-display-btn { font-size: 22px; cursor: pointer; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; display: inline-block; }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE — TABLET & MOBILE
+  ══════════════════════════════════════ */
+
+  @media (max-width: 900px) {
+    body { overflow: hidden; }
+
+    /* Stack: header → content → nav (bottom) */
+    .main-container { flex-direction: column; height: calc(100vh - 44px); }
+
+    /* NAV ABAJO: barra fija de altura mínima que siempre cabe */
+    nav {
+      width: 100%;
+      height: auto;
+      min-height: 54px;
+      flex-direction: row;
+      flex-shrink: 0;
+      padding: 4px 0 4px;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      order: 2;
+      gap: 0;
+      justify-content: space-around;
+      align-items: center;
+      overflow: visible;
+      /* safe-area para iPhones con notch abajo */
+      padding-bottom: max(4px, env(safe-area-inset-bottom));
+    }
+    .nav-btn {
+      width: auto;
+      min-width: 56px;
+      height: 48px;
+      flex-direction: column;
+      gap: 2px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      flex: 1;
+      justify-content: center;
+    }
+    .nav-btn svg { margin-bottom: 0; width: 20px; height: 20px; }
+    .nav-btn span { font-size: 10px; line-height: 1; }
+
+    .content { order: 1; flex: 1; overflow: hidden; min-height: 0; }
+
+    header { padding: 8px 12px; }
+    header .brand { font-size: 15px; }
+
+    /* POS: catálogo arriba, carrito debajo */
+    .pos-grid {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .catalog-side {
+      flex: 1;
+      min-height: 0;
+      padding: 8px;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .cart-side {
+      flex-shrink: 0;
+      height: auto;
+      max-height: 44vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .cart-items { flex: 1; min-height: 0; max-height: 22vh; overflow-y: auto; }
+    .cart-summary { flex-shrink: 0; padding: 10px 12px; gap: 6px; }
+    .summary-row { font-size: 13px; }
+    .summary-row.total { font-size: 15px; }
+    .pay-btn { padding: 11px 8px; font-size: 13px; }
+
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 7px;
+    }
+    .price-mode-bar { padding: 5px 8px; flex-wrap: wrap; gap: 5px; }
+    .price-mode-label { display: none; }
+    .price-toggle-btn { padding: 4px 10px; font-size: 11px; }
+
+    /* Modal desde abajo en móvil */
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal-card { max-width: 100% !important; border-radius: 16px 16px 0 0; max-height: 92vh; }
+    .modal-body { max-height: 65vh; overflow-y: auto; }
+
+    /* Tabla inventario: scroll horizontal */
+    .table-container { padding: 8px; overflow-x: auto; }
+    table { font-size: 12px; min-width: 560px; }
+  }
+
+  /* Teléfonos muy pequeños */
+  @media (max-width: 380px) {
+    .nav-btn { min-width: 44px; padding: 4px 4px; }
+    .nav-btn span { font-size: 9px; }
+    .nav-btn svg { width: 18px; height: 18px; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 5px; }
+  }
+
+  /* Tablets medianas / landscape móvil */
+  @media (min-width: 600px) and (max-width: 900px) {
+    .nav-btn { min-width: 70px; }
+    .nav-btn span { font-size: 11px; }
+    .cart-items { max-height: 28vh; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  }
+
+  /* Móvil en landscape: nav lateral izquierdo pequeño */
+  @media (max-height: 500px) and (max-width: 900px) {
+    .main-container { flex-direction: row; }
+    nav {
+      width: 60px;
+      height: 100%;
+      flex-direction: column;
+      border-top: none;
+      border-right: 1px solid var(--border);
+      order: 0;
+      padding: 8px 0;
+      justify-content: flex-start;
+      gap: 4px;
+    }
+    .nav-btn { width: 48px; height: 44px; flex-direction: column; flex: none; }
+    .content { order: 1; }
+    .pos-grid { flex-direction: row; }
+    .catalog-side { border-bottom: none; border-right: 1px solid var(--border); }
+    .cart-side { width: 220px; max-height: 100%; }
+    .cart-items { max-height: 100%; }
+  }
+
+  /* Desktop grande */
+  @media (min-width: 1200px) {
+    .pos-grid { grid-template-columns: 1fr 420px; display: grid; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
+
+  /* CORRECCIÓN MÓVILES ALTOS (iPhone 14 Pro Max etc) */
+  @media (min-height: 800px) and (max-width: 900px) {
+    .cart-items { max-height: 28vh; }
+    .cart-side { max-height: 46vh; }
+  }
+  @media (min-height: 900px) and (max-width: 900px) {
+    .cart-items { max-height: 30vh; }
+  }
+
+  /* CORTE DEL DIA */
+  .corte-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .corte-card-title { font-size: 13px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .corte-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .corte-row:last-child { border-bottom: none; }
+  .corte-row-label { color: var(--text2); }
+  .corte-row-value { font-weight: 700; color: var(--text); }
+  .corte-big { font-size: 28px; font-weight: 800; color: var(--green); text-align:center; padding: 8px 0; }
+  .corte-resumen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 500px) { .corte-resumen-grid { grid-template-columns: 1fr; } }
+  .corte-stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+  .corte-stat-num { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .corte-stat-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  @media print {
+    nav, header, .admin-header { display: none !important; }
+    body { background: white !important; color: black !important; }
+    .corte-card { border: 1px solid #ccc !important; background: white !important; }
+  }
+
+  /* ═══════════════════════════════════════
+     BILLETES Y MONEDAS MX
+  ═══════════════════════════════════════ */
+  .billete {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    user-select: none;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+  }
+  .billete:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+  .billete:active { transform: scale(0.96); }
+  .billete.selected {
+    border-color: white !important;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 6px 18px rgba(0,0,0,0.5) !important;
+    transform: translateY(-2px) scale(1.05);
+  }
+  .billete-rect {
+    width: 80px;
+    height: 48px;
+    font-size: 17px;
+    letter-spacing: -0.5px;
+  }
+  .billete-circle {
+    width: 54px;
+    height: 54px;
+    border-radius: 50% !important;
+    font-size: 14px;
+  }
+  .billete-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    opacity: 0.75;
+    margin-top: 2px;
+    line-height: 1;
+  }
+  /* Colores reales billetes MX */
+  .b-20  { background: linear-gradient(135deg, #e8a838 0%, #c47d10 60%, #d4920d 100%); color: #3d1f00; }
+  .b-50  { background: linear-gradient(135deg, #e85c9e 0%, #c0336f 60%, #d43e80 100%); color: #3d0020; }
+  .b-100 { background: linear-gradient(135deg, #e05252 0%, #b82222 60%, #cc3030 100%); color: #2a0000; }
+  .b-200 { background: linear-gradient(135deg, #6a4fc8 0%, #4b2fa0 60%, #5a3db8 100%); color: #ede0ff; }
+  .b-500 { background: linear-gradient(135deg, #4caf82 0%, #267050 60%, #339966 100%); color: #001a0d; }
+  .b-1000{ background: linear-gradient(135deg, #5b9ed6 0%, #2c6eaf 60%, #3d84c8 100%); color: #001830; }
+
+  /* Moneda 10 */
+  .b-10  { background: radial-gradient(circle at 40% 35%, #e8d08a, #b8a040 60%, #8a7020 100%); color: #3d2a00; border: 2px solid #c8a820 !important; }
+
+  /* Stripe pattern overlay para los billetes */
+  .billete-rect::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 2px, transparent 2px, transparent 8px);
+    pointer-events: none;
+  }
+  .billete-amount {
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .billete-peso {
+    font-size: 60%;
+    vertical-align: super;
+    margin-right: 1px;
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+
+<div id="db-status-bar">CONECTADO A LA NUBE (FIREBASE CLOUD FIRESTORE)</div>
+
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">NÚCLEO<span>POS</span></div>
+    <div class="login-sub">Introduce tus accesos de Firebase</div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="login-email" placeholder="usuario@empresa.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button id="login-btn" style="width:100%; padding:12px; background:var(--blue); color:white; border:none; border-radius:6px; font-weight:600; cursor:pointer;">Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="brand">NÚCLEO<span>POS</span></div>
+  <div class="user-badge" id="user-badge" style="display:none;">Cargando...</div>
+</header>
+
+<div class="main-container">
+  <nav>
+    <div class="nav-btn active" data-screen="pos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+      <span>Venta</span>
+    </div>
+    <div class="nav-btn" data-screen="products" id="nav-prod-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m-8-14l8 4m-8-4v10l8 4m0-10v10"/></svg>
+      <span>Inventario</span>
+    </div>
+    <div class="nav-btn" data-screen="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>Historial</span>
+    </div>
+    <div class="nav-btn" data-screen="corte" id="nav-corte-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span>Corte</span>
+    </div>
+  </nav>
+
+  <div class="content">
+    
+    <div id="screen-pos" class="screen active">
+      <div class="pos-grid">
+        <div class="catalog-side">
+          <div class="price-mode-bar">
+            <span class="price-mode-label" id="price-mode-label-text">Modo precio:</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="price-mode-badge cf" id="price-mode-badge">★ Frecuente</span>
+              <div class="price-toggle">
+                <button class="price-toggle-btn active-cf" id="toggle-cf">★ Frecuente</button>
+                <button class="price-toggle-btn" id="toggle-pg">🌐 Público</button>
+              </div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="search-input" placeholder="Buscar por nombre o código...">
+            <button id="scan-btn" title="Escanear código de barras con cámara" style="background:none;border:none;cursor:pointer;padding:6px 8px;color:var(--text2);display:flex;align-items:center;gap:4px;border-radius:6px;transition:all 0.2s;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="17" y1="12" x2="17" y2="12.01"/></svg>
+            </button>
+          </div>
+          <div class="categories-row" id="categories-list"></div>
+          <div class="products-grid" id="products-list"></div>
+        </div>
+        
+        <div class="cart-side">
+          <div class="cart-header">
+            <div class="cart-title">Orden de Venta <span class="cart-count" id="cart-count">0</span></div>
+            <div class="clear-cart" id="clear-cart-btn">Vaciar</div>
+          </div>
+          <div class="cart-items" id="cart-items-container"></div>
+          <div class="cart-summary">
+            <div class="summary-row"><span>Subtotal (Sin IVA)</span><span id="sum-subtotal">$0.00</span></div>
+            <div class="summary-row"><span>IVA (16%)</span><span id="sum-iva">$0.00</span></div>
+            <div class="summary-row total"><span>Total</span><span id="sum-total">$0.00</span></div>
+            <div class="pay-grid">
+              <button class="pay-btn cash" id="pay-cash-btn" disabled>EFECTIVO</button>
+              <button class="pay-btn card" id="pay-card-btn" disabled>TARJETA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-products" class="screen">
+      <div style="display:flex; flex-direction:column; height:100%; width:100%;">
+        <div class="admin-header">
+          <div class="admin-title">Gestión de Inventario</div>
+          <button class="btn-primary" id="add-prod-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar Producto
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Ícono</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>★ P. Frecuente</th>
+                <th>P. Público</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-history" class="screen" style="flex-direction:column; padding:16px; overflow-y:auto; gap:10px;">
+      <div id="hist-list"></div>
+    </div>
+
+    <!-- CORTE DEL DIA -->
+    <div id="screen-corte" class="screen" style="flex-direction:column; overflow:hidden;">
+      <div class="admin-header">
+        <div class="admin-title">Corte del Día</div>
+        <button class="btn-primary" id="print-corte-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimir Corte
+        </button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:16px;" id="corte-content">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Agregar Producto</div>
+      <div class="modal-close" id="modal-close-btn">&times;</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="form-id">
+      <div class="form-group">
+        <label>Ícono del Producto</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="emoji-display-btn" id="emoji-display">🛍️</span>
+          <span style="font-size:12px; color:var(--text3);">Toca para cambiar</span>
+        </div>
+        <div class="emoji-picker-row" id="emoji-picker" style="display:none;"></div>
+        <input type="hidden" id="form-emoji" value="🛍️">
+      </div>
+      <div class="form-group">
+        <label>Código de Barras / Único</label>
+        <input type="text" id="form-code" placeholder="Ej. 750100000000">
+      </div>
+      <div class="form-group">
+        <label>Nombre del Producto</label>
+        <input type="text" id="form-name" placeholder="Ej. Refresco de Cola 600ml">
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select id="form-category"></select>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>★ Precio Cliente Frecuente (c/IVA)</label>
+          <input type="number" step="0.01" id="form-price" placeholder="0.00">
+          <div style="font-size:11px; color:var(--green); margin-top:3px;">Precio normal / preferencial</div>
+        </div>
+        <div class="form-group">
+          <label>Precio Público General (c/IVA)</label>
+          <input type="number" step="0.01" id="form-price-pg" placeholder="0.00">
+          <div style="font-size:11px; color:var(--amber); margin-top:3px;">Auto: frecuente + diferencial</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cantidad en Stock</label>
+        <input type="number" id="form-stock" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="modal-cancel-btn">Cancelar</button>
+      <button class="btn-primary" id="modal-save-btn">Guardar Producto</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cash-modal">
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">💵 Cobro en Efectivo</div>
+      <div class="modal-close" id="cash-close-btn">&times;</div>
+    </div>
+    <div class="modal-body" style="gap:14px; padding:14px;">
+      <!-- Total -->
+      <div style="text-align:center; background:var(--green-dim); border:1px solid rgba(34,197,94,0.3); border-radius:8px; padding:10px;">
+        <div style="font-size:12px; color:var(--text2); margin-bottom:2px; font-weight:600; text-transform:uppercase; letter-spacing:.5px;">Total a Pagar</div>
+        <div style="font-size:34px; font-weight:900; color:var(--green);" id="cash-modal-total">$0.00</div>
+      </div>
+
+      <!-- Billetes y monedas sugeridos -->
+      <div>
+        <div style="font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">Toca para seleccionar efectivo recibido</div>
+        <div id="billetes-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+      </div>
+
+      <!-- Separador -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="flex:1; height:1px; background:var(--border);"></div>
+        <span style="font-size:11px; color:var(--text3); font-weight:600;">O ESCRIBE EL MONTO</span>
+        <div style="flex:1; height:1px; background:var(--border);"></div>
+      </div>
+
+      <!-- Input manual -->
+      <div class="form-group">
+        <input type="number" step="0.01" id="cash-received" style="font-size:22px; text-align:center; font-weight:800; padding:11px; border-radius:8px;" placeholder="0.00">
+      </div>
+
+      <!-- Cambio -->
+      <div style="text-align:center; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+        <div style="font-size:11px; color:var(--text3); margin-bottom:3px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Cambio a Entregar</div>
+        <div style="font-size:28px; font-weight:900; color:var(--text);" id="cash-change">$0.00</div>
+        <div style="font-size:11px; color:var(--text3); margin-top:3px;" id="cash-change-detail"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:10px 14px;">
+      <button class="btn-primary" id="cash-confirm-btn" style="width:100%; justify-content:center; padding:13px; background:var(--green); font-size:15px;" disabled>✓ Cobrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-card" style="max-width:300px;">
+    <div class="modal-header">
+      <div class="modal-title">Sesión Activa</div>
+      <div class="modal-close" id="user-close-btn">&times;</div>
+    </div>
+    <div class="modal-body" style="text-align:center; padding:24px 16px;">
+      <div style="font-weight:700; font-size:16px; margin-bottom:4px;" id="profile-email">-</div>
+      <div style="color:var(--blue); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:24px;" id="profile-role">-</div>
+      <button class="btn-secondary" id="logout-btn" style="width:100%; border-color:var(--red); color:var(--red);">Cerrar Sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- APERTURA DE CAJA -->
+<div class="modal-overlay" id="apertura-modal" style="z-index:2500;">
+  <div class="modal-card" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-title">🏪 Apertura de Caja</div>
+    </div>
+    <div class="modal-body" style="gap:18px;">
+      <div style="text-align:center; padding:8px 0;">
+        <div style="font-size:13px; color:var(--text2); margin-bottom:6px;">Ingresa el cambio inicial con el que abre la caja hoy</div>
+        <div style="font-size:12px; color:var(--text3);" id="apertura-fecha"></div>
+      </div>
+      <div class="form-group">
+        <label>Cambio Inicial en Caja (efectivo)</label>
+        <input type="number" step="0.01" id="apertura-monto" style="font-size:24px; text-align:center; font-weight:800; padding:14px;" placeholder="0.00" autofocus>
+      </div>
+      <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:6px; padding:10px 14px; font-size:12px; color:var(--text2); line-height:1.6;">
+        Este monto quedará registrado en el corte del día para cuadrar el efectivo final.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="apertura-confirm-btn" style="width:100%; justify-content:center; padding:13px; font-size:15px;">✓ Abrir Caja</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SCANNER DE CÁMARA -->
+<div class="modal-overlay" id="scanner-modal" style="z-index:3000; background:rgba(0,0,0,0.92);">
+  <div class="modal-card" style="max-width:400px; width:100%;">
+    <div class="modal-header">
+      <div class="modal-title">📷 Escanear Código de Barras</div>
+      <div class="modal-close" id="scanner-close-btn">&times;</div>
+    </div>
+    <div style="padding:0; display:flex; flex-direction:column; align-items:center; gap:0;">
+      <!-- Visor de cámara -->
+      <div id="scanner-viewport" style="position:relative; width:100%; background:#000; overflow:hidden; min-height:260px; display:flex; align-items:center; justify-content:center;">
+        <video id="scanner-video" style="width:100%; max-height:320px; object-fit:cover; display:block;" playsinline autoplay muted></video>
+        <!-- Línea de escaneo animada -->
+        <div id="scan-line" style="display:none; position:absolute; left:10%; right:10%; height:2px; background:rgba(59,130,246,0.9); box-shadow:0 0 8px rgba(59,130,246,0.8); animation:scanLine 2s ease-in-out infinite;"></div>
+        <!-- Marco de enfoque -->
+        <div style="position:absolute; inset:0; pointer-events:none;">
+          <div style="position:absolute; top:20%; left:15%; right:15%; bottom:20%; border:2px solid rgba(255,255,255,0.4); border-radius:8px;"></div>
+          <div style="position:absolute; top:20%; left:15%; width:20px; height:20px; border-top:3px solid var(--blue); border-left:3px solid var(--blue); border-radius:4px 0 0 0;"></div>
+          <div style="position:absolute; top:20%; right:15%; width:20px; height:20px; border-top:3px solid var(--blue); border-right:3px solid var(--blue); border-radius:0 4px 0 0;"></div>
+          <div style="position:absolute; bottom:20%; left:15%; width:20px; height:20px; border-bottom:3px solid var(--blue); border-left:3px solid var(--blue); border-radius:0 0 0 4px;"></div>
+          <div style="position:absolute; bottom:20%; right:15%; width:20px; height:20px; border-bottom:3px solid var(--blue); border-right:3px solid var(--blue); border-radius:0 0 4px 0;"></div>
+        </div>
+        <!-- Estado del scanner -->
+        <div id="scanner-status" style="position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:12px; font-weight:600; color:rgba(255,255,255,0.8); text-shadow:0 1px 4px rgba(0,0,0,0.8);">Apunta al código de barras</div>
+      </div>
+
+      <!-- Resultado detectado -->
+      <div id="scanner-result-bar" style="display:none; width:100%; padding:12px 16px; background:var(--green-dim); border-top:1px solid rgba(34,197,94,0.3); display:none; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:11px; color:var(--green); font-weight:600; margin-bottom:2px;">CÓDIGO DETECTADO</div>
+          <div style="font-size:15px; font-weight:700; font-family:monospace;" id="scanner-result-code">—</div>
+        </div>
+        <div id="scanner-result-prod" style="font-size:12px; color:var(--text2);"></div>
+      </div>
+
+      <!-- Controles -->
+      <div style="width:100%; padding:12px 16px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <button id="scanner-torch-btn" style="flex:1; padding:9px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;" title="Linterna">
+            🔦 Linterna
+          </button>
+          <button id="scanner-flip-btn" style="flex:1; padding:9px; background:var(--surface2); border:1px solid var(--border); color:var(--text2); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;" title="Cambiar cámara">
+            🔄 Cámara
+          </button>
+        </div>
+        <!-- Input manual fallback -->
+        <div style="display:flex; gap:6px; align-items:center;">
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+          <span style="font-size:11px; color:var(--text3); font-weight:600; white-space:nowrap;">O ESCRIBE EL CÓDIGO</span>
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="scanner-manual-input" placeholder="Código de barras..." style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:9px 12px; color:var(--text); font-size:14px; outline:none;">
+          <button id="scanner-manual-btn" style="padding:9px 16px; background:var(--blue); border:none; color:white; border-radius:var(--radius); font-weight:700; cursor:pointer;">Buscar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes scanLine {
+    0% { top: 22%; }
+    50% { top: 72%; }
+    100% { top: 22%; }
+  }
+  #scan-btn:hover { background: var(--surface2) !important; color: var(--blue) !important; }
+  #scan-btn svg { transition: stroke 0.2s; }
+  #scan-btn:hover svg { stroke: var(--blue); }
+  #scanner-torch-btn.active { background: var(--amber-dim) !important; border-color: rgba(245,158,11,0.4) !important; color: var(--amber) !important; }
+</style>
+
+<div id="toast"></div>
+
+<script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+    }
+  }
+</script>
+
+<script type="module">
+  import { initializeApp } from "firebase/app";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
+
+  // === CREDENCIALES DE TU PROYECTO REAL (CAJON) ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyDqUJJHotp4zBKQyFnGUXq3WJd__iKAd9k",
+    authDomain: "cajon-5d517.firebaseapp.com",
+    projectId: "cajon-5d517",
+    storageBucket: "cajon-5d517.firebasestorage.app",
+    messagingSenderId: "907916329608",
+    appId: "1:907916329608:web:06195ff654e7b8403b953d"
+  };
+
+  // Validar Modo Demo
+  const DEMO_MODE = !firebaseConfig.projectId || firebaseConfig.projectId.startsWith('REEMPLAZA_');
+
+  let app, auth, db;
+  if(!DEMO_MODE){
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    document.getElementById('db-status-bar').style.display = 'block';
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+    // En modo demo, mostrar apertura al cargar
+    setTimeout(() => showAperturaModal(), 300);
+  }
+
+  // Estructuras de datos locales
+  let products = [];
+  let cart = [];
+  let sales = [];
+  let currentUser = null;
+
+  const categories = ["Todos", "Abarrotes", "Bebidas", "Snacks", "Dulces", "Helados", "Higiene", "Otros"];
+  let activeCategory = "Todos";
+  let priceMode = 'cf'; // 'cf' = cliente frecuente, 'pg' = público general
+
+  const PRICE_DIFF_DEFAULT = 2;
+
+  function setPriceMode(mode) {
+    priceMode = mode;
+    const badgeEl = document.getElementById('price-mode-badge');
+    const btnCF = document.getElementById('toggle-cf');
+    const btnPG = document.getElementById('toggle-pg');
+    if(mode === 'cf') {
+      badgeEl.textContent = '★ Frecuente';
+      badgeEl.className = 'price-mode-badge cf';
+      btnCF.className = 'price-toggle-btn active-cf';
+      btnPG.className = 'price-toggle-btn';
+    } else {
+      badgeEl.textContent = '🌐 Público';
+      badgeEl.className = 'price-mode-badge pg';
+      btnCF.className = 'price-toggle-btn';
+      btnPG.className = 'price-toggle-btn active-pg';
+    }
+    renderCatalog();
+    renderCart();
+  }
+
+  // Wire toggle buttons via addEventListener (module scope safe)
+  document.getElementById('toggle-cf').addEventListener('click', () => setPriceMode('cf'));
+  document.getElementById('toggle-pg').addEventListener('click', () => setPriceMode('pg'));
+
+  function getActivePrice(p) {
+    if(priceMode === 'pg' && p.pricePG != null) return Number(p.pricePG);
+    return Number(p.price || 0);
+  }
+
+  // Emoji picker
+  const EMOJIS = ['🛍️','🥤','💧','🧃','🍺','🥔','🌽','🍰','🥛','🍶','🧀','🥚','🍚','🫘','🫙','🧼','🧴','☕','🌮','🥪','🍕','🍔','🌯','🍱','🥗','🧁','🍫','🍬','🍩','🥐','🥜','🌶️','🧅','🥦','🥬','🥕','🍅','🍋','🍊','🍇','🍓','🍌','🍉','🍒','🏪','📦','🎁'];
+  let selectedEmoji = '🛍️';
+
+  function toggleEmojiPicker() {
+    const picker = document.getElementById('emoji-picker');
+    if(picker.style.display === 'none' || picker.style.display === '') {
+      picker.style.display = 'flex';
+      picker.innerHTML = EMOJIS.map(e =>
+        `<span class="emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</span>`
+      ).join('');
+      // Wire clicks inside picker
+      picker.querySelectorAll('.emoji-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          selectedEmoji = el.dataset.emoji;
+          document.getElementById('emoji-display').textContent = selectedEmoji;
+          document.getElementById('form-emoji').value = selectedEmoji;
+          picker.style.display = 'none';
+        });
+      });
+    } else {
+      picker.style.display = 'none';
+    }
+  }
+
+  document.getElementById('emoji-display').addEventListener('click', toggleEmojiPicker);
+
+  function autoFillPricePG() {
+    const cf = parseFloat(document.getElementById('form-price').value) || 0;
+    const pgField = document.getElementById('form-price-pg');
+    if(cf > 0 && (!pgField.value || Math.abs(parseFloat(pgField.value) - (cf + PRICE_DIFF_DEFAULT)) < 5)) {
+      pgField.value = (cf + PRICE_DIFF_DEFAULT).toFixed(2);
+    }
+  }
+
+  document.getElementById('form-price').addEventListener('input', autoFillPricePG);
+
+  // Control de interfaz
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = { email: user.email, role: user.email.includes('admin') ? 'Administrador' : 'Cajero' };
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('user-badge').style.display = 'flex';
+      document.getElementById('user-badge').innerText = currentUser.role;
+      document.getElementById('profile-email').innerText = currentUser.email;
+      document.getElementById('profile-role').innerText = currentUser.role;
+      
+      if(currentUser.role !== 'Administrador') {
+        document.getElementById('nav-prod-btn').style.display = 'none';
+      } else {
+        document.getElementById('nav-prod-btn').style.display = 'flex';
+      }
+      
+      showToast(`Bienvenido, ${currentUser.email}`);
+      await loadData();
+      showAperturaModal();
+    } else {
+      currentUser = null;
+      document.getElementById('login-overlay').style.display = 'flex';
+      document.getElementById('user-badge').style.display = 'none';
+    }
+  });
+
+  async function login(){
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if(!email || !pass) return showToast("Por favor llena ambos campos");
+    
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch(err) {
+      console.error(err);
+      showToast("Error de autenticación: Credenciales inválidas");
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+      document.getElementById('user-modal').classList.remove('open');
+      products = []; cart = []; sales = [];
+      renderAll();
+    } catch(err) {
+      showToast("Error al cerrar sesión");
+    }
+  }
+
+  // Carga de datos
+  async function loadData() {
+    if(DEMO_MODE) {
+      products = JSON.parse(localStorage.getItem('pos_products')) || [];
+      sales = JSON.parse(localStorage.getItem('pos_sales')) || [];
+      renderAll();
+      return;
+    }
+
+    try {
+      const prodSnap = await getDocs(collection(db, "products"));
+      products = [];
+      prodSnap.forEach(doc => {
+        products.push({ id: doc.id, ...doc.data() });
+      });
+
+      const salesSnap = await getDocs(query(collection(db, "sales"), orderBy("timestamp", "desc")));
+      sales = [];
+      salesSnap.forEach(doc => {
+        sales.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderAll();
+    } catch(err) {
+      console.error(err);
+      showToast("Error leyendo datos de Firestore");
+    }
+  }
+
+  // Renderizadores de Interfaz
+  function renderAll() {
+    renderCategories();
+    renderCatalog();
+    renderCart();
+    renderAdminTable();
+    renderHistory();
+  }
+
+  function renderCategories() {
+    const container = document.getElementById('categories-list');
+    container.innerHTML = categories.map(c => `
+      <div class="cat-chip ${activeCategory === c ? 'active' : ''}" data-cat="${c}">${c}</div>
+    `).join('');
+    
+    container.querySelectorAll('.cat-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        activeCategory = chip.dataset.cat;
+        renderCategories();
+        renderCatalog();
+      });
+    });
+  }
+
+  function renderCatalog() {
+    const container = document.getElementById('products-list');
+    const queryStr = document.getElementById('search-input').value.toLowerCase().trim();
+    
+    let filtered = products.filter(p => {
+      const matchCat = (activeCategory === "Todos" || p.category === activeCategory);
+      const matchSearch = p.name.toLowerCase().includes(queryStr) || (p.code||'').includes(queryStr);
+      return matchCat && matchSearch;
+    });
+
+    if(filtered.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text3); font-size:14px;">Ningún producto coincide con la búsqueda</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+      const isLow = p.stock <= 3;
+      const activePrice = getActivePrice(p);
+      const altPrice = priceMode === 'cf'
+        ? `<div class="prod-price-pg">Público: $${Number(p.pricePG || (Number(p.price||0) + PRICE_DIFF_DEFAULT)).toFixed(2)}</div>`
+        : `<div class="prod-price-pg" style="color:var(--green);">★ Frec: $${Number(p.price||0).toFixed(2)}</div>`;
+      const emoji = p.emoji || '🛍️';
+      return `
+        <div class="prod-card" data-id="${p.id}">
+          <span class="prod-emoji">${emoji}</span>
+          <div class="prod-name">${p.name}</div>
+          <div class="prod-footer">
+            <div>
+              <div class="prod-price">$${activePrice.toFixed(2)}</div>
+              ${altPrice}
+            </div>
+            <div class="prod-stock ${isLow ? 'low' : ''}">${p.stock} pz</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.prod-card').forEach(card => {
+      card.addEventListener('click', () => addToCart(card.dataset.id));
+    });
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cart-items-container');
+    if(cart.length === 0) {
+      container.innerHTML = `
+        <div class="cart-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span>El carrito está vacío</span>
+        </div>
+      `;
+      document.getElementById('cart-count').innerText = '0';
+      document.getElementById('sum-subtotal').innerText = '$0.00';
+      document.getElementById('sum-iva').innerText = '$0.00';
+      document.getElementById('sum-total').innerText = '$0.00';
+      document.getElementById('pay-cash-btn').disabled = true;
+      document.getElementById('pay-card-btn').disabled = true;
+      return;
+    }
+
+    let totalCount = 0;
+    let finalTotal = 0;
+
+    container.innerHTML = cart.map(item => {
+      totalCount += item.qty;
+      const unitPrice = getActivePrice(item.product);
+      const itemTotal = unitPrice * item.qty;
+      finalTotal += itemTotal;
+      const emoji = item.product.emoji || '🛍️';
+      return `
+        <div class="cart-item">
+          <div class="item-info">
+            <div class="item-name">${emoji} ${item.product.name}</div>
+            <div class="item-price">$${unitPrice.toFixed(2)} ${priceMode === 'pg' ? '<span style="color:var(--amber);font-size:10px;">PÚBLICO</span>' : ''}</div>
+          </div>
+          <div class="item-actions">
+            <div class="qty-btn dec" data-id="${item.product.id}">-</div>
+            <div class="item-qty">${item.qty}</div>
+            <div class="qty-btn inc" data-id="${item.product.id}">+</div>
+            <div class="item-total">$${itemTotal.toFixed(2)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.qty-btn.inc').forEach(btn => {
+      btn.addEventListener('click', () => addToCart(btn.dataset.id));
+    });
+    container.querySelectorAll('.qty-btn.dec').forEach(btn => {
+      btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+    });
+
+    const subtotal = finalTotal / 1.16;
+    const iva = finalTotal - subtotal;
+
+    document.getElementById('cart-count').innerText = totalCount;
+    document.getElementById('sum-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+    document.getElementById('sum-iva').innerText = `$${iva.toFixed(2)}`;
+    document.getElementById('sum-total').innerText = `$${finalTotal.toFixed(2)}`;
+    document.getElementById('pay-cash-btn').disabled = false;
+    document.getElementById('pay-card-btn').disabled = false;
+  }
+
+  function renderAdminTable() {
+    const container = document.getElementById('admin-table-body');
+    if(products.length === 0) {
+      container.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text3); padding:20px;">No hay productos registrados</td></tr>`;
+      return;
+    }
+    container.innerHTML = products.map(p => {
+      const pricePG = Number(p.pricePG || (Number(p.price||0) + PRICE_DIFF_DEFAULT)).toFixed(2);
+      const emoji = p.emoji || '🛍️';
+      return `
+      <tr>
+        <td style="font-size:22px; text-align:center;">${emoji}</td>
+        <td style="font-family:monospace; font-weight:600;">${p.code}</td>
+        <td style="font-weight:600;">${p.name}</td>
+        <td><span style="background:var(--surface2); padding:4px 8px; border-radius:4px; font-size:12px;">${p.category}</span></td>
+        <td style="color:var(--green); font-weight:700;">$${Number(p.price || 0).toFixed(2)}</td>
+        <td style="color:var(--amber); font-weight:700;">$${pricePG}</td>
+        <td style="font-weight:700;">${p.stock} pz</td>
+        <td>
+          <div class="actions-cell">
+            <span class="action-icon edit" data-id="${p.id}">✏️</span>
+            <span class="action-icon delete" data-id="${p.id}">❌</span>
+          </div>
+        </td>
+      </tr>
+    `}).join('');
+
+    container.querySelectorAll('.action-icon.edit').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+    });
+    container.querySelectorAll('.action-icon.delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteProductItem(btn.dataset.id));
+    });
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('hist-list');
+    if(sales.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text3); font-size:14px;">No hay registros de ventas anteriores</div>`;
+      return;
+    }
+
+    container.innerHTML = sales.map(s => {
+      let dateObj = s.timestamp?.seconds ? new Date(s.timestamp.seconds * 1000) : new Date(s.timestamp || Date.now());
+      const timeStr = dateObj.toLocaleString();
+      const mLabel = s.method === 'cash' ? 'Efectivo' : 'Tarjeta';
+      const mClass = s.method === 'cash' ? 'cash' : 'card';
+      
+      const itemsSummary = s.items.map(i => `
+        <div class="hist-detail-item">
+          <span>${i.emoji || '🛍️'} ${i.name} (x${i.qty})</span>
+          <span>$${Number(i.price * i.qty).toFixed(2)}</span>
+        </div>
+      `).join('');
+
+      const modeRow = `<div class="hist-detail-item" style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); font-weight:600;"><span>Subtotal General</span><span>$${Number(s.subtotal||0).toFixed(2)}</span></div>
+                       <div class="hist-detail-item" style="font-weight:600;"><span>IVA Trasladado (16%)</span><span>$${Number(s.iva||0).toFixed(2)}</span></div>
+                       ${s.priceMode === 'pg' ? '<div class="hist-detail-item" style="color:var(--amber);"><span>Modo precio</span><span>🌐 Público General</span></div>' : ''}`;
+      
+      const cashRow = s.method === 'cash' ? `
+        <div class="hist-detail-item" style="color:var(--text3)"><span>Efectivo entregado</span><span>$${s.received.toFixed(2)}</span></div>
+        <div class="hist-detail-item" style="color:var(--green)"><span>Cambio entregado</span><span>$${s.change.toFixed(2)}</span></div>
+      ` : '';
+
+      return `
+        <div class="hist-sale">
+          <div class="hist-header">
+            <div>
+              <div style="font-size:14px; font-weight:600">Venta #${String(s.id || '').slice(-4)}</div>
+              <div class="hist-time">${timeStr}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px">
+              <span class="hist-method ${mClass}">${mLabel}</span>
+              <span class="hist-total">$${Number(s.total||0).toFixed(2)}</span>
+              <span style="color:var(--text3); font-size:16px">▾</span>
+            </div>
+          </div>
+          <div class="hist-detail">${itemsSummary}${modeRow}${cashRow}</div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.hist-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const detail = header.nextElementSibling;
+        detail.style.display = detail.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+  }
+
+  // Funciones Lógicas del Carrito
+  function addToCart(id) {
+    const prod = products.find(p => p.id === id);
+    if(!prod) return;
+    
+    const existing = cart.find(item => item.product.id === id);
+    if(existing) {
+      if(existing.qty >= prod.stock) return showToast("Cantidad supera el stock disponible");
+      existing.qty++;
+    } else {
+      if(prod.stock <= 0) return showToast("Producto agotado");
+      cart.push({ product: prod, qty: 1 });
+    }
+    renderCart();
+  }
+
+  function removeFromCart(id) {
+    const existing = cart.find(item => item.product.id === id);
+    if(!existing) return;
+    existing.qty--;
+    if(existing.qty <= 0) {
+      cart = cart.filter(item => item.product.id !== id);
+    }
+    renderCart();
+  }
+
+  // Procesar Transacciones de Ventas
+  async function submitTransaction(method, received = 0, change = 0) {
+    let finalTotal = 0;
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
+    
+    const subtotal = finalTotal / 1.16;
+    const iva = finalTotal - subtotal;
+
+    const saleData = {
+      items: cart.map(i => ({ id: i.product.id, name: i.product.name, emoji: i.product.emoji || '🛍️', price: getActivePrice(i.product), qty: i.qty })),
+      total: finalTotal,
+      subtotal: subtotal,
+      iva: iva,
+      method: method,
+      priceMode: priceMode,
+      received: received,
+      change: change,
+      timestamp: DEMO_MODE ? Date.now() : new Date()
+    };
+
+    if(DEMO_MODE) {
+      // Guardado Local
+      cart.forEach(item => {
+        const p = products.find(prod => prod.id === item.product.id);
+        if(p) p.stock -= item.qty;
+      });
+      saleData.id = 'LOCAL_' + Math.random().toString(36).substr(2, 9);
+      sales.unshift(saleData);
+      localStorage.setItem('pos_products', JSON.stringify(products));
+      localStorage.setItem('pos_sales', JSON.stringify(sales));
+      showToast("Venta guardada localmente");
+    } else {
+      // Guardado en la nube con transacciones seguras
+      try {
+        const batch = writeBatch(db);
+        
+        // Descontar Stock
+        for(let item of cart) {
+          const pRef = doc(db, "products", item.product.id);
+          const currentProd = products.find(p => p.id === item.product.id);
+          batch.update(pRef, { stock: currentProd.stock - item.qty });
+        }
+        
+        // Agregar Ticket
+        const saleRef = doc(collection(db, "sales"));
+        batch.set(saleRef, saleData);
+        
+        await batch.commit();
+        showToast("Venta sincronizada en la nube");
+      } catch(err) {
+        console.error(err);
+        return showToast("Error fatal procesando venta en la nube");
+      }
+    }
+
+    cart = [];
+    await loadData();
+  }
+
+  // ═══════════════════════════════════════════
+  //  BILLETES Y MONEDAS MX
+  // ═══════════════════════════════════════════
+  const DENOMINACIONES = [
+    { valor: 10,   tipo: 'moneda',  clase: 'b-10',   label: 'Moneda' },
+    { valor: 20,   tipo: 'billete', clase: 'b-20',   label: 'Billete' },
+    { valor: 50,   tipo: 'billete', clase: 'b-50',   label: 'Billete' },
+    { valor: 100,  tipo: 'billete', clase: 'b-100',  label: 'Billete' },
+    { valor: 200,  tipo: 'billete', clase: 'b-200',  label: 'Billete' },
+    { valor: 500,  tipo: 'billete', clase: 'b-500',  label: 'Billete' },
+    { valor: 1000, tipo: 'billete', clase: 'b-1000', label: 'Billete' },
+  ];
+
+  // Devuelve cuál es el billete/moneda más pequeño >= total
+  function minDenomValida(total) {
+    for (const d of DENOMINACIONES) {
+      if (d.valor >= total) return d.valor;
+    }
+    return 1000;
+  }
+
+  // Genera los billetes sugeridos inteligentes para el total dado
+  function denominacionesSugeridas(total) {
+    const minVal = minDenomValida(total);
+    // Mostrar desde la mínima válida hacia arriba
+    return DENOMINACIONES.filter(d => d.valor >= minVal);
+  }
+
+  // Desglosa cambio en billetes/monedas para mostrar al cajero
+  function desglosarCambio(cambio) {
+    if (cambio <= 0) return '';
+    let resto = cambio;
+    const partes = [];
+    const dens = [...DENOMINACIONES].reverse(); // de mayor a menor
+    for (const d of dens) {
+      const cant = Math.floor(resto / d.valor);
+      if (cant > 0) {
+        partes.push(`${cant}×$${d.valor}`);
+        resto = Math.round((resto - cant * d.valor) * 100) / 100;
+      }
+    }
+    return partes.length ? 'Cambio: ' + partes.join(' + ') : '';
+  }
+
+  let cashSelectedDenom = null; // denominación actualmente seleccionada
+
+  function renderBilletes(total) {
+    const container = document.getElementById('billetes-grid');
+    const sugeridos = denominacionesSugeridas(total);
+    cashSelectedDenom = null;
+
+    container.innerHTML = sugeridos.map(d => {
+      const esMoneda = d.tipo === 'moneda';
+      const shapeClass = esMoneda ? 'billete-circle' : 'billete-rect';
+      return `
+        <div class="billete ${shapeClass} ${d.clase}" data-valor="${d.valor}" title="${d.label} de $${d.valor}">
+          <div class="billete-amount"><span class="billete-peso">$</span>${d.valor >= 1000 ? '1K' : d.valor}</div>
+          <div class="billete-label">${d.label}</div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.billete').forEach(el => {
+      el.addEventListener('click', () => {
+        // Deselect all
+        container.querySelectorAll('.billete').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        cashSelectedDenom = parseFloat(el.dataset.valor);
+        document.getElementById('cash-received').value = cashSelectedDenom.toFixed(2);
+        calculateChange();
+      });
+    });
+  }
+
+  // Modal de Efectivo Interno
+  function openCashModal() {
+    let finalTotal = 0;
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
+    
+    document.getElementById('cash-modal-total').innerText = `$${finalTotal.toFixed(2)}`;
+    document.getElementById('cash-received').value = '';
+    document.getElementById('cash-change').innerText = '$0.00';
+    document.getElementById('cash-change-detail').innerText = '';
+    document.getElementById('cash-confirm-btn').disabled = true;
+    renderBilletes(finalTotal);
+    document.getElementById('cash-modal').classList.add('open');
+  }
+
+  function calculateChange() {
+    let finalTotal = 0;
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
+    const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+    const change = Math.round((rec - finalTotal) * 100) / 100;
+    
+    if (change >= 0) {
+      document.getElementById('cash-change').innerText = `$${change.toFixed(2)}`;
+      document.getElementById('cash-change-detail').innerText = desglosarCambio(change);
+      document.getElementById('cash-confirm-btn').disabled = false;
+    } else {
+      document.getElementById('cash-change').innerText = '$0.00';
+      document.getElementById('cash-change-detail').innerText = '';
+      document.getElementById('cash-confirm-btn').disabled = true;
+    }
+
+    // Si el usuario escribe manual, deseleccionar billetes
+    const inputVal = parseFloat(document.getElementById('cash-received').value) || 0;
+    if (cashSelectedDenom !== null && inputVal !== cashSelectedDenom) {
+      document.querySelectorAll('#billetes-grid .billete').forEach(b => b.classList.remove('selected'));
+      cashSelectedDenom = null;
+    }
+  }
+
+  // Crud Altas/Bajas del Catálogo
+  function openAddModal() {
+    document.getElementById('modal-title').innerText = "Agregar Producto";
+    document.getElementById('form-id').value = '';
+    document.getElementById('form-code').value = '';
+    document.getElementById('form-name').value = '';
+    document.getElementById('form-price').value = '';
+    document.getElementById('form-price-pg').value = '';
+    document.getElementById('form-stock').value = '';
+    selectedEmoji = '🛍️';
+    document.getElementById('emoji-display').textContent = '🛍️';
+    document.getElementById('form-emoji').value = '🛍️';
+    document.getElementById('emoji-picker').style.display = 'none';
+    
+    const sel = document.getElementById('form-category');
+    sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `<option value="${c}">${c}</option>`).join('');
+    
+    document.getElementById('add-modal').classList.add('open');
+  }
+
+  function openEditModal(id) {
+    const p = products.find(prod => prod.id === id);
+    if(!p) return;
+    
+    document.getElementById('modal-title').innerText = "Modificar Producto";
+    document.getElementById('form-id').value = p.id;
+    document.getElementById('form-code').value = p.code;
+    document.getElementById('form-name').value = p.name;
+    document.getElementById('form-price').value = p.price;
+    document.getElementById('form-price-pg').value = p.pricePG != null ? p.pricePG : (Number(p.price||0) + PRICE_DIFF_DEFAULT).toFixed(2);
+    document.getElementById('form-stock').value = p.stock;
+    selectedEmoji = p.emoji || '🛍️';
+    document.getElementById('emoji-display').textContent = selectedEmoji;
+    document.getElementById('form-emoji').value = selectedEmoji;
+    document.getElementById('emoji-picker').style.display = 'none';
+    
+    const sel = document.getElementById('form-category');
+    sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `
+      <option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>
+    `).join('');
+    
+    document.getElementById('add-modal').classList.add('open');
+  }
+
+  async function saveProductData() {
+    const id = document.getElementById('form-id').value;
+    const code = document.getElementById('form-code').value.trim();
+    const name = document.getElementById('form-name').value.trim();
+    const category = document.getElementById('form-category').value;
+    const price = parseFloat(document.getElementById('form-price').value) || 0;
+    const stock = parseInt(document.getElementById('form-stock').value) || 0;
+
+    if(!code || !name || price <= 0) return showToast("Por favor ingresa datos válidos");
+
+    const pData = { code, name, category, price, pricePG: parseFloat(document.getElementById('form-price-pg').value) || (price + PRICE_DIFF_DEFAULT), stock, emoji: document.getElementById('form-emoji').value || '🛍️' };
+
+    if(DEMO_MODE) {
+      if(id) {
+        products = products.map(p => p.id === id ? { id, ...pData } : p);
+      } else {
+        pData.id = 'P_' + Date.now();
+        products.push(pData);
+      }
+      localStorage.setItem('pos_products', JSON.stringify(products));
+      showToast("Cambio guardado localmente");
+    } else {
+      try {
+        if(id) {
+          await updateDoc(doc(db, "products", id), pData);
+        } else {
+          await addDoc(collection(db, "products"), pData);
+        }
+        showToast("Producto sincronizado con éxito");
+      } catch(err) {
+        return showToast("Error guardando elemento en Firestore");
+      }
+    }
+
+    document.getElementById('add-modal').classList.remove('open');
+    await loadData();
+  }
+
+  async function deleteProductItem(id) {
+    if(!confirm("¿Estás seguro de que deseas eliminar este producto permanentemente del inventario?")) return;
+    
+    if(DEMO_MODE) {
+      products = products.filter(p => p.id !== id);
+      localStorage.setItem('pos_products', JSON.stringify(products));
+      showToast("Eliminado del cliente");
+    } else {
+      try {
+        await deleteDoc(doc(db, "products", id));
+        showToast("Eliminado de la nube de Google");
+      } catch(err) {
+        return showToast("Error borrando el registro de Firestore");
+      }
+    }
+    await loadData();
+  }
+
+  // Notificaciones Toast Flotantes
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Atajos de Teclado Globales y Enrutamiento de Pantallas
+  // ═══════════════════════════════════════════
+  //  APERTURA DE CAJA
+  // ═══════════════════════════════════════════
+  let aperturaMonto = 0;
+
+  function showAperturaModal() {
+    const now = new Date();
+    document.getElementById('apertura-fecha').textContent = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    // Check if already opened today
+    const lastApertura = localStorage.getItem('pos_apertura_date');
+    const todayStr = now.toDateString();
+    if (lastApertura === todayStr) {
+      aperturaMonto = parseFloat(localStorage.getItem('pos_apertura_monto') || 0);
+      return; // ya se abrió hoy, no mostrar
+    }
+    document.getElementById('apertura-monto').value = '';
+    document.getElementById('apertura-modal').classList.add('open');
+    setTimeout(() => document.getElementById('apertura-monto').focus(), 200);
+  }
+
+  document.getElementById('apertura-confirm-btn').addEventListener('click', () => {
+    const monto = parseFloat(document.getElementById('apertura-monto').value) || 0;
+    aperturaMonto = monto;
+    const todayStr = new Date().toDateString();
+    localStorage.setItem('pos_apertura_date', todayStr);
+    localStorage.setItem('pos_apertura_monto', monto);
+    document.getElementById('apertura-modal').classList.remove('open');
+    showToast('Caja abierta con $' + monto.toFixed(2) + ' de cambio inicial');
+  });
+
+  // ═══════════════════════════════════════════
+  //  CORTE DEL DIA
+  // ═══════════════════════════════════════════
+  function renderCorte() {
+    const container = document.getElementById('corte-content');
+    const now = new Date();
+    const todayStr = now.toDateString();
+
+    // Filter sales from today
+    const todaySales = sales.filter(s => {
+      let d = s.timestamp?.seconds ? new Date(s.timestamp.seconds * 1000) : new Date(s.timestamp || 0);
+      return d.toDateString() === todayStr;
+    });
+
+    const totalVentas = todaySales.reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalEfectivo = todaySales.filter(s => s.method === 'cash').reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalTarjeta = todaySales.filter(s => s.method === 'card').reduce((acc, s) => acc + Number(s.total || 0), 0);
+    const totalIVA = todaySales.reduce((acc, s) => acc + Number(s.iva || 0), 0);
+    const totalSubtotal = todaySales.reduce((acc, s) => acc + Number(s.subtotal || 0), 0);
+    const numTransacciones = todaySales.length;
+    const numEfectivo = todaySales.filter(s => s.method === 'cash').length;
+    const numTarjeta = todaySales.filter(s => s.method === 'card').length;
+    const cambioInicial = parseFloat(localStorage.getItem('pos_apertura_monto') || 0);
+    const efectivoEnCaja = cambioInicial + totalEfectivo;
+
+    // Top products
+    const prodMap = {};
+    todaySales.forEach(s => {
+      (s.items || []).forEach(item => {
+        if (!prodMap[item.name]) prodMap[item.name] = { qty: 0, total: 0, emoji: item.emoji || 'X' };
+        prodMap[item.name].qty += item.qty;
+        prodMap[item.name].total += item.price * item.qty;
+      });
+    });
+    const topProds = Object.entries(prodMap).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+
+    const fechaStr = now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const horaStr = now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+
+    container.innerHTML = `
+      <div style="text-align:center; padding:8px 0 4px;">
+        <div style="font-size:16px; font-weight:800; text-transform:capitalize;">${fechaStr}</div>
+        <div style="font-size:12px; color:var(--text3); margin-top:2px;">Generado a las ${horaStr}</div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">💰 Resumen de Ventas del Día</div>
+        <div class="corte-big">$${totalVentas.toFixed(2)}</div>
+        <div class="corte-resumen-grid" style="margin-top:12px;">
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--green);">${numTransacciones}</div>
+            <div class="corte-stat-label">Transacciones</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--blue);">$${(numTransacciones > 0 ? totalVentas/numTransacciones : 0).toFixed(2)}</div>
+            <div class="corte-stat-label">Ticket Promedio</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--green);">$${totalEfectivo.toFixed(2)}</div>
+            <div class="corte-stat-label">Efectivo (${numEfectivo} ventas)</div>
+          </div>
+          <div class="corte-stat-box">
+            <div class="corte-stat-num" style="color:var(--blue);">$${totalTarjeta.toFixed(2)}</div>
+            <div class="corte-stat-label">Tarjeta (${numTarjeta} ventas)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">🧾 Desglose Fiscal</div>
+        <div class="corte-row"><span class="corte-row-label">Subtotal (sin IVA)</span><span class="corte-row-value">$${totalSubtotal.toFixed(2)}</span></div>
+        <div class="corte-row"><span class="corte-row-label">IVA Trasladado (16%)</span><span class="corte-row-value" style="color:var(--amber);">$${totalIVA.toFixed(2)}</span></div>
+        <div class="corte-row" style="padding-top:10px; border-top:1px solid var(--border2);"><span class="corte-row-label" style="font-weight:700;">Total con IVA</span><span class="corte-row-value" style="color:var(--green); font-size:16px;">$${totalVentas.toFixed(2)}</span></div>
+      </div>
+
+      <div class="corte-card">
+        <div class="corte-card-title">🪙 Efectivo en Caja</div>
+        <div class="corte-row"><span class="corte-row-label">Cambio inicial (apertura)</span><span class="corte-row-value">$${cambioInicial.toFixed(2)}</span></div>
+        <div class="corte-row"><span class="corte-row-label">Ventas en efectivo del día</span><span class="corte-row-value">$${totalEfectivo.toFixed(2)}</span></div>
+        <div class="corte-row" style="padding-top:10px; border-top:1px solid var(--border2);"><span class="corte-row-label" style="font-weight:700;">Total esperado en caja</span><span class="corte-row-value" style="color:var(--green); font-size:16px;">$${efectivoEnCaja.toFixed(2)}</span></div>
+      </div>
+
+      ${topProds.length > 0 ? `
+      <div class="corte-card">
+        <div class="corte-card-title">🏆 Productos Más Vendidos</div>
+        ${topProds.map(([name, data], i) => `
+          <div class="corte-row">
+            <span class="corte-row-label">${i+1}. ${data.emoji} ${name}</span>
+            <span class="corte-row-value">${data.qty} pz — $${data.total.toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>` : ''}
+
+      ${todaySales.length === 0 ? '<div style="text-align:center; padding:40px; color:var(--text3);">No hay ventas registradas hoy</div>' : ''}
+    `;
+  }
+
+  document.getElementById('print-corte-btn').addEventListener('click', () => {
+    window.print();
+  });
+
+  // ═══════════════════════════════════════════
+  //  NAV ROUTING (original + corte)
+  // ═══════════════════════════════════════════
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      
+      btn.classList.add('active');
+      document.getElementById(`screen-${btn.dataset.screen}`).classList.add('active');
+      if (btn.dataset.screen === 'corte') renderCorte();
+    });
+  });
+
+  document.getElementById('search-input').addEventListener('input', renderCatalog);
+  document.getElementById('clear-cart-btn').addEventListener('click', () => { cart = []; renderCart(); });
+  
+  // Modales Clics
+  document.getElementById('add-prod-btn').addEventListener('click', openAddModal);
+  document.getElementById('modal-close-btn').addEventListener('click', () => document.getElementById('add-modal').classList.remove('open'));
+  document.getElementById('modal-cancel-btn').addEventListener('click', () => document.getElementById('add-modal').classList.remove('open'));
+  document.getElementById('modal-save-btn').addEventListener('click', saveProductData);
+  
+  document.getElementById('pay-cash-btn').addEventListener('click', openCashModal);
+  document.getElementById('cash-close-btn').addEventListener('click', () => document.getElementById('cash-modal').classList.remove('open'));
+  document.getElementById('cash-received').addEventListener('input', calculateChange);
+  
+  document.getElementById('cash-confirm-btn').addEventListener('click', async () => {
+    let finalTotal = 0;
+    cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
+    const rec = parseFloat(document.getElementById('cash-received').value) || 0;
+    const change = rec - finalTotal;
+    
+    document.getElementById('cash-modal').classList.remove('open');
+    await submitTransaction('cash', rec, change);
+  });
+
+  document.getElementById('pay-card-btn').addEventListener('click', async () => {
+    if(confirm("¿Proceder con el cobro mediante Terminal de Tarjeta Bancaria?")) {
+      await submitTransaction('card');
+    }
+  });
+
+  // Vincular eventos internos para el Login
+  document.getElementById('login-btn').addEventListener('click', login);
+  document.getElementById('login-pass').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') login();
+  });
+
+  // Perfil e Inicio de sesión interactivo
+  document.getElementById('user-badge').addEventListener('click', () => document.getElementById('user-modal').classList.add('open'));
+  document.getElementById('user-close-btn').addEventListener('click', () => document.getElementById('user-modal').classList.remove('open'));
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+  // ═══════════════════════════════════════════
+  //  SCANNER DE CÓDIGO DE BARRAS CON CÁMARA
+  // ═══════════════════════════════════════════
+  let scannerStream = null;
+  let scannerDetector = null;
+  let scannerAnimFrame = null;
+  let scannerFacingMode = 'environment'; // cámara trasera por defecto
+  let torchEnabled = false;
+  let scannerActive = false;
+
+  // Verificar soporte de BarcodeDetector (Chrome/Android nativo)
+  const hasBarcodeDetector = 'BarcodeDetector' in window;
+
+  async function openScanner() {
+    document.getElementById('scanner-modal').classList.add('open');
+    document.getElementById('scanner-result-bar').style.display = 'none';
+    document.getElementById('scanner-manual-input').value = '';
+    scannerActive = true;
+    await startCamera();
+  }
+
+  async function closeScanner() {
+    scannerActive = false;
+    stopCamera();
+    document.getElementById('scanner-modal').classList.remove('open');
+  }
+
+  async function startCamera() {
+    stopCamera(); // limpiar si había una activa
+    const statusEl = document.getElementById('scanner-status');
+    const scanLine = document.getElementById('scan-line');
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: scannerFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const video = document.getElementById('scanner-video');
+      video.srcObject = scannerStream;
+      await video.play();
+
+      // Mostrar línea de escaneo
+      scanLine.style.display = 'block';
+
+      if(hasBarcodeDetector) {
+        // API nativa — más rápida y confiable
+        scannerDetector = new BarcodeDetector({
+          formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','data_matrix','itf','codabar']
+        });
+        statusEl.textContent = '🔍 Buscando código...';
+        scanFrame();
+      } else {
+        // Fallback: cargar html5-qrcode dinámicamente
+        statusEl.textContent = '⏳ Cargando escáner...';
+        await loadHtml5QrCode();
+        statusEl.textContent = '🔍 Buscando código...';
+      }
+    } catch(err) {
+      console.error('Camera error:', err);
+      statusEl.textContent = '❌ ' + (err.name === 'NotAllowedError'
+        ? 'Permiso de cámara denegado. Permite el acceso en tu navegador.'
+        : 'No se pudo acceder a la cámara. Usa el campo manual.');
+      scanLine.style.display = 'none';
+    }
+  }
+
+  function stopCamera() {
+    if(scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+    if(scannerStream) {
+      scannerStream.getTracks().forEach(t => t.stop());
+      scannerStream = null;
+    }
+    const video = document.getElementById('scanner-video');
+    video.srcObject = null;
+    torchEnabled = false;
+    document.getElementById('scanner-torch-btn').classList.remove('active');
+  }
+
+  // Loop de detección con BarcodeDetector nativo
+  async function scanFrame() {
+    if(!scannerActive || !scannerStream) return;
+    const video = document.getElementById('scanner-video');
+    if(video.readyState === video.HAVE_ENOUGH_DATA) {
+      try {
+        const barcodes = await scannerDetector.detect(video);
+        if(barcodes.length > 0) {
+          const code = barcodes[0].rawValue;
+          onBarcodeDetected(code);
+          return; // detener loop al detectar
+        }
+      } catch(e) {}
+    }
+    scannerAnimFrame = requestAnimationFrame(scanFrame);
+  }
+
+  // Fallback: html5-qrcode vía CDN
+  async function loadHtml5QrCode() {
+    return new Promise((resolve) => {
+      if(window.Html5Qrcode) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+      script.onload = () => {
+        startHtml5QrCode();
+        resolve();
+      };
+      script.onerror = () => {
+        document.getElementById('scanner-status').textContent = '⚠️ Sin escáner automático. Escribe el código manualmente.';
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function startHtml5QrCode() {
+    if(!window.Html5Qrcode) return;
+    // Reemplazar el video con el div que necesita html5-qrcode
+    const viewport = document.getElementById('scanner-viewport');
+    const video = document.getElementById('scanner-video');
+    const scannerDiv = document.createElement('div');
+    scannerDiv.id = 'html5qr-reader';
+    scannerDiv.style.width = '100%';
+    viewport.insertBefore(scannerDiv, video);
+    video.style.display = 'none';
+
+    const html5QrCode = new Html5Qrcode('html5qr-reader');
+    window._html5QrCode = html5QrCode;
+    html5QrCode.start(
+      { facingMode: scannerFacingMode },
+      { fps: 15, qrbox: { width: 250, height: 150 } },
+      (code) => { onBarcodeDetected(code); html5QrCode.stop(); },
+      () => {}
+    ).catch(err => {
+      document.getElementById('scanner-status').textContent = '❌ Cámara no disponible. Escribe el código.';
+    });
+  }
+
+  // ── Código detectado ──
+  function onBarcodeDetected(code) {
+    if(!code) return;
+    stopCamera();
+    document.getElementById('scan-line').style.display = 'none';
+    document.getElementById('scanner-status').textContent = '✅ Código detectado';
+
+    // Vibración táctil si está disponible
+    if(navigator.vibrate) navigator.vibrate([50, 30, 50]);
+
+    // Buscar producto
+    const prod = products.find(p => (p.code || '').trim() === code.trim());
+
+    const resultBar = document.getElementById('scanner-result-bar');
+    resultBar.style.display = 'flex';
+    document.getElementById('scanner-result-code').textContent = code;
+
+    if(prod) {
+      document.getElementById('scanner-result-prod').textContent = `${prod.emoji || '🛍️'} ${prod.name}`;
+      resultBar.style.background = 'var(--green-dim)';
+      resultBar.style.borderTopColor = 'rgba(34,197,94,0.3)';
+
+      // Agregar al carrito automáticamente
+      setTimeout(() => {
+        closeScanner();
+        addToCart(prod.id);
+        showToast(`${prod.emoji || '🛍️'} ${prod.name} agregado al carrito`);
+      }, 600);
+    } else {
+      // Producto no encontrado: poner en búsqueda y cerrar
+      document.getElementById('scanner-result-prod').textContent = '⚠️ No encontrado en inventario';
+      resultBar.style.background = 'var(--amber-dim)';
+      resultBar.style.borderTopColor = 'rgba(245,158,11,0.3)';
+      document.getElementById('scanner-result-code').style.color = 'var(--amber)';
+
+      setTimeout(() => {
+        closeScanner();
+        // Poner el código en la búsqueda para que el usuario vea qué pasó
+        document.getElementById('search-input').value = code;
+        renderCatalog();
+        showToast(`Código ${code} no registrado en inventario`);
+      }, 1200);
+    }
+  }
+
+  // ── Linterna ──
+  document.getElementById('scanner-torch-btn').addEventListener('click', async () => {
+    if(!scannerStream) return;
+    const track = scannerStream.getVideoTracks()[0];
+    if(!track || !track.getCapabilities) return;
+    const caps = track.getCapabilities();
+    if(!caps.torch) { showToast('Esta cámara no tiene linterna'); return; }
+    torchEnabled = !torchEnabled;
+    await track.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+    document.getElementById('scanner-torch-btn').classList.toggle('active', torchEnabled);
+  });
+
+  // ── Cambiar cámara front/back ──
+  document.getElementById('scanner-flip-btn').addEventListener('click', async () => {
+    scannerFacingMode = scannerFacingMode === 'environment' ? 'user' : 'environment';
+    if(scannerActive) await startCamera();
+  });
+
+  // ── Búsqueda manual desde modal ──
+  document.getElementById('scanner-manual-btn').addEventListener('click', () => {
+    const code = document.getElementById('scanner-manual-input').value.trim();
+    if(!code) return;
+    onBarcodeDetected(code);
+  });
+  document.getElementById('scanner-manual-input').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+      const code = document.getElementById('scanner-manual-input').value.trim();
+      if(code) onBarcodeDetected(code);
+    }
+  });
+
+  // ── Abrir/cerrar ──
+  document.getElementById('scan-btn').addEventListener('click', openScanner);
+  document.getElementById('scanner-close-btn').addEventListener('click', closeScanner);
+
+  // Cerrar al tocar fuera del modal
+  document.getElementById('scanner-modal').addEventListener('click', (e) => {
+    if(e.target === document.getElementById('scanner-modal')) closeScanner();
+  });
+
+  // Atajos de Teclado del POS
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(e.code === 'Space') { e.preventDefault(); document.getElementById('search-input').focus(); }
+    if(e.key === 'Escape') {
+      document.getElementById('add-modal').classList.remove('open');
+      document.getElementById('user-modal').classList.remove('open');
+      document.getElementById('cash-modal').classList.remove('open');
+      closeScanner();
+      // apertura-modal: solo cerrar si ya tiene monto guardado
+      const ap = document.getElementById('apertura-modal');
+      if(ap.classList.contains('open') && localStorage.getItem('pos_apertura_date') === new Date().toDateString()) ap.classList.remove('open');
+    }
+  });
+</script>
+</body>
+</html>
