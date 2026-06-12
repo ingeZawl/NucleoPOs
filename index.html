@@ -181,17 +181,12 @@
   .price-mode-badge.cf { background: var(--green-dim); color: var(--green); }
   .price-mode-badge.pg { background: var(--amber-dim); color: var(--amber); }
 
-  /* EMOJI PICKER — buscador */
-  .emoji-display-btn { font-size: 24px; cursor: pointer; padding: 7px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; display: inline-block; transition: border-color .2s; }
-  .emoji-display-btn:hover { border-color: var(--blue); }
-  #emoji-picker-panel { display:none; flex-direction:column; gap:8px; margin-top:8px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; }
-  #emoji-search-input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text); font-size:13px; outline:none; width:100%; }
-  #emoji-search-input:focus { border-color:var(--blue); }
-  #emoji-results { display:flex; flex-wrap:wrap; gap:4px; max-height:140px; overflow-y:auto; }
-  .emoji-opt { font-size:22px; cursor:pointer; padding:5px 7px; border-radius:7px; border:1px solid transparent; transition:all .12s; line-height:1; }
-  .emoji-opt:hover { background:var(--surface2); border-color:var(--border); transform:scale(1.15); }
-  .emoji-opt.selected { background:var(--blue-dim); border-color:rgba(59,130,246,.5); }
-  .emoji-auto-badge { font-size:10px; color:var(--blue); font-weight:700; margin-left:4px; vertical-align:middle; }
+  /* EMOJI PICKER */
+  .emoji-picker-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; max-height: 80px; overflow-y: auto; }
+  .emoji-opt { font-size: 20px; cursor: pointer; padding: 4px 6px; border-radius: 6px; border: 1px solid transparent; transition: all 0.1s; }
+  .emoji-opt:hover { background: var(--surface2); border-color: var(--border); }
+  .emoji-opt.selected { background: var(--blue-dim); border-color: rgba(59,130,246,0.4); }
+  .emoji-display-btn { font-size: 22px; cursor: pointer; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; display: inline-block; }
 
   /* ══════════════════════════════════════
      RESPONSIVE — TABLET & MOBILE
@@ -322,6 +317,83 @@
     nav, header, .admin-header { display: none !important; }
     body { background: white !important; color: black !important; }
     .corte-card { border: 1px solid #ccc !important; background: white !important; }
+  }
+
+  /* ═══════════════════════════════════════
+     BILLETES Y MONEDAS MX
+  ═══════════════════════════════════════ */
+  .billete {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    user-select: none;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+  }
+  .billete:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+  .billete:active { transform: scale(0.96); }
+  .billete.selected {
+    border-color: white !important;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 6px 18px rgba(0,0,0,0.5) !important;
+    transform: translateY(-2px) scale(1.05);
+  }
+  .billete-rect {
+    width: 80px;
+    height: 48px;
+    font-size: 17px;
+    letter-spacing: -0.5px;
+  }
+  .billete-circle {
+    width: 54px;
+    height: 54px;
+    border-radius: 50% !important;
+    font-size: 14px;
+  }
+  .billete-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    opacity: 0.75;
+    margin-top: 2px;
+    line-height: 1;
+  }
+  /* Colores reales billetes MX */
+  .b-20  { background: linear-gradient(135deg, #e8a838 0%, #c47d10 60%, #d4920d 100%); color: #3d1f00; }
+  .b-50  { background: linear-gradient(135deg, #e85c9e 0%, #c0336f 60%, #d43e80 100%); color: #3d0020; }
+  .b-100 { background: linear-gradient(135deg, #e05252 0%, #b82222 60%, #cc3030 100%); color: #2a0000; }
+  .b-200 { background: linear-gradient(135deg, #6a4fc8 0%, #4b2fa0 60%, #5a3db8 100%); color: #ede0ff; }
+  .b-500 { background: linear-gradient(135deg, #4caf82 0%, #267050 60%, #339966 100%); color: #001a0d; }
+  .b-1000{ background: linear-gradient(135deg, #5b9ed6 0%, #2c6eaf 60%, #3d84c8 100%); color: #001830; }
+
+  /* Moneda 10 */
+  .b-10  { background: radial-gradient(circle at 40% 35%, #e8d08a, #b8a040 60%, #8a7020 100%); color: #3d2a00; border: 2px solid #c8a820 !important; }
+
+  /* Stripe pattern overlay para los billetes */
+  .billete-rect::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 2px, transparent 2px, transparent 8px);
+    pointer-events: none;
+  }
+  .billete-amount {
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .billete-peso {
+    font-size: 60%;
+    vertical-align: super;
+    margin-right: 1px;
+    opacity: 0.9;
   }
 </style>
 </head>
@@ -474,17 +546,10 @@
       <div class="form-group">
         <label>Ícono del Producto</label>
         <div style="display:flex; align-items:center; gap:10px;">
-          <span class="emoji-display-btn" id="emoji-display" title="Toca para buscar ícono">🛍️</span>
-          <div style="flex:1;">
-            <div style="font-size:12px; color:var(--text2); font-weight:600;" id="emoji-auto-label">Auto-asignado</div>
-            <div style="font-size:11px; color:var(--text3);">Toca el ícono para cambiar</div>
-          </div>
+          <span class="emoji-display-btn" id="emoji-display">🛍️</span>
+          <span style="font-size:12px; color:var(--text3);">Toca para cambiar</span>
         </div>
-        <div id="emoji-picker-panel">
-          <input type="text" id="emoji-search-input" placeholder="🔍  Buscar: refresco, leche, pan...">
-          <div id="emoji-results"></div>
-          <div style="font-size:10px; color:var(--text3); text-align:right; margin-top:2px;">Mostrando los más relevantes</div>
-        </div>
+        <div class="emoji-picker-row" id="emoji-picker" style="display:none;"></div>
         <input type="hidden" id="form-emoji" value="🛍️">
       </div>
       <div class="form-group">
@@ -524,27 +589,45 @@
 </div>
 
 <div class="modal-overlay" id="cash-modal">
-  <div class="modal-card" style="max-width:340px;">
+  <div class="modal-card" style="max-width:420px;">
     <div class="modal-header">
-      <div class="modal-title">Cobro en Efectivo</div>
+      <div class="modal-title">💵 Cobro en Efectivo</div>
       <div class="modal-close" id="cash-close-btn">&times;</div>
     </div>
-    <div class="modal-body" style="gap:16px;">
-      <div style="text-align:center;">
-        <div style="font-size:13px; color:var(--text2); margin-bottom:4px;">Total a Pagar</div>
-        <div style="font-size:32px; font-weight:800; color:var(--green);" id="cash-modal-total">$0.00</div>
+    <div class="modal-body" style="gap:14px; padding:14px;">
+      <!-- Total -->
+      <div style="text-align:center; background:var(--green-dim); border:1px solid rgba(34,197,94,0.3); border-radius:8px; padding:10px;">
+        <div style="font-size:12px; color:var(--text2); margin-bottom:2px; font-weight:600; text-transform:uppercase; letter-spacing:.5px;">Total a Pagar</div>
+        <div style="font-size:34px; font-weight:900; color:var(--green);" id="cash-modal-total">$0.00</div>
       </div>
+
+      <!-- Billetes y monedas sugeridos -->
+      <div>
+        <div style="font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">Toca para seleccionar efectivo recibido</div>
+        <div id="billetes-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+      </div>
+
+      <!-- Separador -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="flex:1; height:1px; background:var(--border);"></div>
+        <span style="font-size:11px; color:var(--text3); font-weight:600;">O ESCRIBE EL MONTO</span>
+        <div style="flex:1; height:1px; background:var(--border);"></div>
+      </div>
+
+      <!-- Input manual -->
       <div class="form-group">
-        <label>Efectivo Recibido</label>
-        <input type="number" step="0.01" id="cash-received" style="font-size:20px; text-align:center; font-weight:700; padding:12px;" placeholder="0.00" autofocus>
+        <input type="number" step="0.01" id="cash-received" style="font-size:22px; text-align:center; font-weight:800; padding:11px; border-radius:8px;" placeholder="0.00">
       </div>
-      <div style="text-align:center; background:rgba(255,255,255,0.02); padding:12px; border-radius:6px; border:1px solid var(--border);">
-        <div style="font-size:12px; color:var(--text3); margin-bottom:2px; font-weight:600;">CAMBIO A ENTREGAR</div>
-        <div style="font-size:24px; font-weight:800; color:var(--text);" id="cash-change">$0.00</div>
+
+      <!-- Cambio -->
+      <div style="text-align:center; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+        <div style="font-size:11px; color:var(--text3); margin-bottom:3px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Cambio a Entregar</div>
+        <div style="font-size:28px; font-weight:900; color:var(--text);" id="cash-change">$0.00</div>
+        <div style="font-size:11px; color:var(--text3); margin-top:3px;" id="cash-change-detail"></div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-primary" id="cash-confirm-btn" style="width:100%; justify-content:center; padding:12px; background:var(--green);" disabled>Concluir Transacción</button>
+    <div class="modal-footer" style="padding:10px 14px;">
+      <button class="btn-primary" id="cash-confirm-btn" style="width:100%; justify-content:center; padding:13px; background:var(--green); font-size:15px;" disabled>✓ Cobrar</button>
     </div>
   </div>
 </div>
@@ -671,272 +754,32 @@
     return Number(p.price || 0);
   }
 
-  // ═══════════════════════════════════════════════════════
-  //  EMOJI — base de datos, auto-asignación y buscador
-  // ═══════════════════════════════════════════════════════
-
-  // Mapa keyword → emoji  (nombre del producto, sin acentos OK también)
-  const EMOJI_KEYWORDS = [
-    // ── Bebidas ──────────────────────────────────────────
-    {k:['refresco','cola','pepsi','coca','fanta','sprite','mirinda','manzanita','peñafiel','boing','jumex','del valle','sangría','sidral'],e:'🥤'},
-    {k:['agua','ciel','bonafont','epura','pureza','purificada'],e:'💧'},
-    {k:['jugo','néctar','naranjada','limonada'],e:'🧃'},
-    {k:['cerveza','clara','modelo','corona','indio','pacifico','tecate','dos equis','victoria','heineken','caguama'],e:'🍺'},
-    {k:['leche','lala','alpura','sigma','deslactosada','entera','light'],e:'🥛'},
-    {k:['yogurt','yoplait','chambourcy','danonino','yakult'],e:'🫙'},
-    {k:['café','nescafé','dolca','americano','cappuccino','latte','expresso'],e:'☕'},
-    {k:['te','té','lipton','nestea','infusión'],e:'🍵'},
-    {k:['atole','avena','maizena'],e:'🥣'},
-    {k:['vino','tinto','blanco'],e:'🍷'},
-    {k:['mezcal','tequila'],e:'🥃'},
-    {k:['coctel','cocktail'],e:'🍹'},
-    {k:['energy','red bull','monster','boost'],e:'⚡'},
-    // ── Lácteos / Fríos ───────────────────────────────────
-    {k:['queso','manchego','panela','oaxaca','chihuahua','gouda','crema','philadelphia'],e:'🧀'},
-    {k:['mantequilla','margarina'],e:'🧈'},
-    {k:['huevo','huevos'],e:'🥚'},
-    {k:['crema','jocoque'],e:'🥛'},
-    // ── Panadería / Tortillería ───────────────────────────
-    {k:['pan','bimbo','wonder','toast','telera','bolillo','birote','baguette'],e:'🍞'},
-    {k:['tortilla','tortillas','tostada'],e:'🫓'},
-    {k:['pastel','cake'],e:'🎂'},
-    {k:['cuernito','croissant','medialunas'],e:'🥐'},
-    {k:['dona','donut','donas'],e:'🍩'},
-    {k:['galleta','oreo','marinela','canelitas','chokis','emperador'],e:'🍪'},
-    {k:['muffin','panqué','panque'],e:'🧁'},
-    // ── Dulces / Golosinas ────────────────────────────────
-    {k:['chocolate','carlos v','abuelita','hershey','kisses','nutella','cocoa'],e:'🍫'},
-    {k:['dulce','mazapán','paletita','pulparindo','miguelito','lucas','limon','tamarindo'],e:'🍬'},
-    {k:['paleta','helado','nieve','payaso'],e:'🍭'},
-    {k:['chicle','chicles','adams','dentyne'],e:'🫧'},
-    {k:['gomita','gominola','trolli','haribo'],e:'🐛'},
-    {k:['caramelo','cajeta'],e:'🍮'},
-    {k:['obleas'],e:'🫓'},
-    // ── Helados ───────────────────────────────────────────
-    {k:['helado','nieve','paleta','pingüino','holanda','nestle'],e:'🍦'},
-    {k:['raspado','fruta preparada'],e:'🍧'},
-    // ── Snacks / Botanería ────────────────────────────────
-    {k:['papa','papas','sabritas','ruffles','pringles','doritos','cheetos','fritos','takis','tostitos'],e:'🥔'},
-    {k:['cacahuate','maní','nuez','almendra','pistache'],e:'🥜'},
-    {k:['chicharrón','pork rind'],e:'🐷'},
-    {k:['palomita','palomitas','popcorn'],e:'🍿'},
-    {k:['semilla','pepita'],e:'🌰'},
-    {k:['barra','granola','nature valley'],e:'🍫'},
-    // ── Abarrotes ─────────────────────────────────────────
-    {k:['arroz','maseca','harina'],e:'🍚'},
-    {k:['frijol','frijoles','lenteja','garbanzo'],e:'🫘'},
-    {k:['aceite','manteca','crisco'],e:'🫗'},
-    {k:['sal','pimienta'],e:'🧂'},
-    {k:['azúcar','azucar','piloncillo'],e:'🍬'},
-    {k:['vinagre','salsa','catsup','ketchup','valentina','maggi'],e:'🍶'},
-    {k:['mayonesa','mayonaise','hellmann'],e:'🥫'},
-    {k:['atun','atún','sardina','clemente'],e:'🐟'},
-    {k:['sopa','pasta','tallarín','fideos','maruchan'],e:'🍝'},
-    {k:['crema tomato','tomate'],e:'🍅'},
-    {k:['maíz','elote','choclo'],e:'🌽'},
-    {k:['chile','jalapeño','habanero','serrano','chipotl','chipotle','mole'],e:'🌶️'},
-    {k:['ajo','cebolla','cebollín'],e:'🧅'},
-    {k:['especia','comino','orégano','canela'],e:'🌿'},
-    // ── Carnes / Embutidos ────────────────────────────────
-    {k:['jamón','jamon','salchicha','salchichon','longaniza','chorizo','mortadela','salami'],e:'🥩'},
-    {k:['pollo','pechuga'],e:'🍗'},
-    {k:['carne','bistec','milanesa'],e:'🥩'},
-    {k:['atún','salmón','salmon'],e:'🐟'},
-    // ── Frutas y Verduras ─────────────────────────────────
-    {k:['manzana','apple'],e:'🍎'},
-    {k:['platano','plátano','banana'],e:'🍌'},
-    {k:['naranja','mandarina','toronja'],e:'🍊'},
-    {k:['limón','limon'],e:'🍋'},
-    {k:['uva','uvas'],e:'🍇'},
-    {k:['fresa','fresas','strawberry'],e:'🍓'},
-    {k:['sandía','sandia'],e:'🍉'},
-    {k:['melón','melon'],e:'🍈'},
-    {k:['pera'],e:'🍐'},
-    {k:['durazno','melocotón'],e:'🍑'},
-    {k:['cereza','cherry'],e:'🍒'},
-    {k:['kiwi'],e:'🥝'},
-    {k:['mango'],e:'🥭'},
-    {k:['aguacate','avocado'],e:'🥑'},
-    {k:['jitomate','tomate'],e:'🍅'},
-    {k:['brócoli','brocoli'],e:'🥦'},
-    {k:['zanahoria'],e:'🥕'},
-    {k:['lechuga','espinaca'],e:'🥬'},
-    {k:['pepino'],e:'🥒'},
-    {k:['papa','patata'],e:'🥔'},
-    // ── Comida preparada ──────────────────────────────────
-    {k:['pizza'],e:'🍕'},
-    {k:['hamburguesa','burger'],e:'🍔'},
-    {k:['taco','tacos','quesadilla','enchilada','gordita'],e:'🌮'},
-    {k:['burrito','wrap','torta'],e:'🌯'},
-    {k:['tamale','tamal'],e:'🫔'},
-    {k:['pozole','menudo','birria'],e:'🍲'},
-    {k:['sushi','roll'],e:'🍱'},
-    {k:['ensalada','salad'],e:'🥗'},
-    {k:['sandwich'],e:'🥪'},
-    // ── Higiene / Cuidado Personal ────────────────────────
-    {k:['jabón','jabon','shampoo','shampu','acondicionador'],e:'🧴'},
-    {k:['desodorante','antitranspirante'],e:'🧴'},
-    {k:['pasta dental','cepillo','crest','colgate','oral-b'],e:'🦷'},
-    {k:['papel','kleenex','servilleta','pañuelo'],e:'🧻'},
-    {k:['pañal','pampers','huggies'],e:'👶'},
-    {k:['toalla','kotex','stayfree'],e:'🩹'},
-    {k:['rastrillo','gillette'],e:'🪒'},
-    {k:['perfume','colonia'],e:'🌸'},
-    {k:['crema','loción','locion','lubriderm'],e:'🧴'},
-    // ── Limpieza ──────────────────────────────────────────
-    {k:['detergente','ariel','persil','tide','roma','ace'],e:'🧺'},
-    {k:['cloro','hipoclorito','cloralex'],e:'🫧'},
-    {k:['escoba','trapeador','zacate'],e:'🧹'},
-    {k:['esponja'],e:'🧽'},
-    {k:['bolsa','bolsas','basura'],e:'🗑️'},
-    {k:['fabuloso','pinol','pinolene','ajax'],e:'🧹'},
-    // ── Bebé ──────────────────────────────────────────────
-    {k:['leche bebé','formula','similac','enfamil','nan'],e:'🍼'},
-    // ── Medicamentos / Farmacia ───────────────────────────
-    {k:['aspirina','paracetamol','ibuprofeno','antigripal','vitamina'],e:'💊'},
-    {k:['curita','vendaje','alcohol'],e:'🩹'},
-    // ── Varios ────────────────────────────────────────────
-    {k:['pila','batería','bateria','duracell','energizer'],e:'🔋'},
-    {k:['foco','ampolleta','led'],e:'💡'},
-    {k:['encendedor','cerillos','cerillo','veladora'],e:'🕯️'},
-    {k:['bolígrafo','pluma','lapiz','lápiz'],e:'✏️'},
-    {k:['cuaderno','libreta'],e:'📓'},
-    {k:['cinta','scotch','resistol'],e:'🖊️'},
-    {k:['condón','condom'],e:'💊'},
-    {k:['regalo','empaque'],e:'🎁'},
-    {k:['caja','cartón','carton'],e:'📦'},
-  ];
-
-  // Mapa por categoría (fallback)
-  const EMOJI_BY_CATEGORY = {
-    'Abarrotes': '🫙',
-    'Bebidas':   '🥤',
-    'Snacks':    '🍿',
-    'Dulces':    '🍬',
-    'Helados':   '🍦',
-    'Higiene':   '🧴',
-    'Lácteos':   '🥛',
-    'Limpieza':  '🧹',
-    'Otros':     '🛍️',
-  };
-
-  // Auto-asigna emoji por nombre → categoría como fallback
-  function autoEmoji(nombre, categoria) {
-    const n = (nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    for (const row of EMOJI_KEYWORDS) {
-      for (const k of row.k) {
-        const kn = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        if (n.includes(kn)) return { emoji: row.e, fuente: 'nombre' };
-      }
-    }
-    const bycat = EMOJI_BY_CATEGORY[categoria];
-    if (bycat) return { emoji: bycat, fuente: 'categoria' };
-    return { emoji: '🛍️', fuente: 'default' };
-  }
-
-  // Todos los emojis únicos del mapa para búsqueda
-  const ALL_EMOJI_ENTRIES = EMOJI_KEYWORDS.map(r => ({ keywords: r.k, emoji: r.e }));
-
+  // Emoji picker
+  const EMOJIS = ['🛍️','🥤','💧','🧃','🍺','🥔','🌽','🍰','🥛','🍶','🧀','🥚','🍚','🫘','🫙','🧼','🧴','☕','🌮','🥪','🍕','🍔','🌯','🍱','🥗','🧁','🍫','🍬','🍩','🥐','🥜','🌶️','🧅','🥦','🥬','🥕','🍅','🍋','🍊','🍇','🍓','🍌','🍉','🍒','🏪','📦','🎁'];
   let selectedEmoji = '🛍️';
-  let emojiPickerOpen = false;
 
-  function setEmoji(e, label) {
-    selectedEmoji = e;
-    document.getElementById('emoji-display').textContent = e;
-    document.getElementById('form-emoji').value = e;
-    if (label) document.getElementById('emoji-auto-label').innerHTML =
-      label + ' <span class="emoji-auto-badge">✦ AUTO</span>';
-  }
-
-  function renderEmojiResults(query) {
-    const q = (query || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    let results;
-    if (!q) {
-      // Sin búsqueda: mostrar todos (únicos, deduplicados)
-      const seen = new Set();
-      results = ALL_EMOJI_ENTRIES.filter(e => {
-        if (seen.has(e.emoji)) return false;
-        seen.add(e.emoji); return true;
-      });
-    } else {
-      // Buscar por keywords
-      const seen = new Set();
-      results = ALL_EMOJI_ENTRIES.filter(e => {
-        if (seen.has(e.emoji)) return false;
-        const match = e.keywords.some(k => {
-          const kn = k.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          return kn.includes(q) || q.includes(kn.substring(0, Math.max(3, kn.length-1)));
+  function toggleEmojiPicker() {
+    const picker = document.getElementById('emoji-picker');
+    if(picker.style.display === 'none' || picker.style.display === '') {
+      picker.style.display = 'flex';
+      picker.innerHTML = EMOJIS.map(e =>
+        `<span class="emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</span>`
+      ).join('');
+      // Wire clicks inside picker
+      picker.querySelectorAll('.emoji-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          selectedEmoji = el.dataset.emoji;
+          document.getElementById('emoji-display').textContent = selectedEmoji;
+          document.getElementById('form-emoji').value = selectedEmoji;
+          picker.style.display = 'none';
         });
-        if (match) { seen.add(e.emoji); return true; }
-        return false;
       });
-    }
-    const container = document.getElementById('emoji-results');
-    if (results.length === 0) {
-      container.innerHTML = '<span style="font-size:12px; color:var(--text3); padding:6px;">Sin resultados — prueba otra palabra</span>';
-      return;
-    }
-    container.innerHTML = results.map(r =>
-      `<span class="emoji-opt${r.emoji === selectedEmoji ? ' selected' : ''}" data-emoji="${r.emoji}" title="${r.keywords[0]}">${r.emoji}</span>`
-    ).join('');
-    container.querySelectorAll('.emoji-opt').forEach(el => {
-      el.addEventListener('click', () => {
-        setEmoji(el.dataset.emoji, el.title);
-        document.getElementById('emoji-auto-label').textContent = el.title;
-        closeEmojiPicker();
-      });
-    });
-  }
-
-  function openEmojiPicker() {
-    emojiPickerOpen = true;
-    const panel = document.getElementById('emoji-picker-panel');
-    panel.style.display = 'flex';
-    document.getElementById('emoji-search-input').value = '';
-    renderEmojiResults('');
-    document.getElementById('emoji-search-input').focus();
-  }
-
-  function closeEmojiPicker() {
-    emojiPickerOpen = false;
-    document.getElementById('emoji-picker-panel').style.display = 'none';
-  }
-
-  document.getElementById('emoji-display').addEventListener('click', () => {
-    emojiPickerOpen ? closeEmojiPicker() : openEmojiPicker();
-  });
-
-  document.getElementById('emoji-search-input').addEventListener('input', e => {
-    renderEmojiResults(e.target.value);
-  });
-
-  // Auto-asignar cuando cambia el nombre
-  document.getElementById('form-name').addEventListener('input', () => {
-    const nombre = document.getElementById('form-name').value;
-    const categoria = document.getElementById('form-category').value;
-    const { emoji, fuente } = autoEmoji(nombre, categoria);
-    setEmoji(emoji, fuente === 'nombre' ? nombre : categoria);
-    if (fuente !== 'default') {
-      document.getElementById('emoji-auto-label').innerHTML = fuente === 'nombre'
-        ? `Por nombre <span class="emoji-auto-badge">✦ AUTO</span>`
-        : `Por categoría <span class="emoji-auto-badge">✦ AUTO</span>`;
     } else {
-      document.getElementById('emoji-auto-label').textContent = 'Auto-asignado';
+      picker.style.display = 'none';
     }
-  });
+  }
 
-  // Re-calcular emoji cuando cambia la categoría (solo si viene de auto)
-  document.getElementById('form-category').addEventListener('change', () => {
-    const nombre = document.getElementById('form-name').value;
-    const categoria = document.getElementById('form-category').value;
-    const { emoji, fuente } = autoEmoji(nombre, categoria);
-    setEmoji(emoji);
-    document.getElementById('emoji-auto-label').innerHTML = fuente === 'nombre'
-      ? `Por nombre <span class="emoji-auto-badge">✦ AUTO</span>`
-      : fuente === 'categoria'
-        ? `Por categoría <span class="emoji-auto-badge">✦ AUTO</span>`
-        : 'Auto-asignado';
-  });
+  document.getElementById('emoji-display').addEventListener('click', toggleEmojiPicker);
 
   function autoFillPricePG() {
     const cf = parseFloat(document.getElementById('form-price').value) || 0;
@@ -1329,6 +1172,80 @@
     await loadData();
   }
 
+  // ═══════════════════════════════════════════
+  //  BILLETES Y MONEDAS MX
+  // ═══════════════════════════════════════════
+  const DENOMINACIONES = [
+    { valor: 10,   tipo: 'moneda',  clase: 'b-10',   label: 'Moneda' },
+    { valor: 20,   tipo: 'billete', clase: 'b-20',   label: 'Billete' },
+    { valor: 50,   tipo: 'billete', clase: 'b-50',   label: 'Billete' },
+    { valor: 100,  tipo: 'billete', clase: 'b-100',  label: 'Billete' },
+    { valor: 200,  tipo: 'billete', clase: 'b-200',  label: 'Billete' },
+    { valor: 500,  tipo: 'billete', clase: 'b-500',  label: 'Billete' },
+    { valor: 1000, tipo: 'billete', clase: 'b-1000', label: 'Billete' },
+  ];
+
+  // Devuelve cuál es el billete/moneda más pequeño >= total
+  function minDenomValida(total) {
+    for (const d of DENOMINACIONES) {
+      if (d.valor >= total) return d.valor;
+    }
+    return 1000;
+  }
+
+  // Genera los billetes sugeridos inteligentes para el total dado
+  function denominacionesSugeridas(total) {
+    const minVal = minDenomValida(total);
+    // Mostrar desde la mínima válida hacia arriba
+    return DENOMINACIONES.filter(d => d.valor >= minVal);
+  }
+
+  // Desglosa cambio en billetes/monedas para mostrar al cajero
+  function desglosarCambio(cambio) {
+    if (cambio <= 0) return '';
+    let resto = cambio;
+    const partes = [];
+    const dens = [...DENOMINACIONES].reverse(); // de mayor a menor
+    for (const d of dens) {
+      const cant = Math.floor(resto / d.valor);
+      if (cant > 0) {
+        partes.push(`${cant}×$${d.valor}`);
+        resto = Math.round((resto - cant * d.valor) * 100) / 100;
+      }
+    }
+    return partes.length ? 'Cambio: ' + partes.join(' + ') : '';
+  }
+
+  let cashSelectedDenom = null; // denominación actualmente seleccionada
+
+  function renderBilletes(total) {
+    const container = document.getElementById('billetes-grid');
+    const sugeridos = denominacionesSugeridas(total);
+    cashSelectedDenom = null;
+
+    container.innerHTML = sugeridos.map(d => {
+      const esMoneda = d.tipo === 'moneda';
+      const shapeClass = esMoneda ? 'billete-circle' : 'billete-rect';
+      return `
+        <div class="billete ${shapeClass} ${d.clase}" data-valor="${d.valor}" title="${d.label} de $${d.valor}">
+          <div class="billete-amount"><span class="billete-peso">$</span>${d.valor >= 1000 ? '1K' : d.valor}</div>
+          <div class="billete-label">${d.label}</div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.billete').forEach(el => {
+      el.addEventListener('click', () => {
+        // Deselect all
+        container.querySelectorAll('.billete').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        cashSelectedDenom = parseFloat(el.dataset.valor);
+        document.getElementById('cash-received').value = cashSelectedDenom.toFixed(2);
+        calculateChange();
+      });
+    });
+  }
+
   // Modal de Efectivo Interno
   function openCashModal() {
     let finalTotal = 0;
@@ -1337,23 +1254,33 @@
     document.getElementById('cash-modal-total').innerText = `$${finalTotal.toFixed(2)}`;
     document.getElementById('cash-received').value = '';
     document.getElementById('cash-change').innerText = '$0.00';
+    document.getElementById('cash-change-detail').innerText = '';
     document.getElementById('cash-confirm-btn').disabled = true;
+    renderBilletes(finalTotal);
     document.getElementById('cash-modal').classList.add('open');
-    setTimeout(() => document.getElementById('cash-received').focus(), 150);
   }
 
   function calculateChange() {
     let finalTotal = 0;
     cart.forEach(i => finalTotal += (getActivePrice(i.product) * i.qty));
     const rec = parseFloat(document.getElementById('cash-received').value) || 0;
-    const change = rec - finalTotal;
+    const change = Math.round((rec - finalTotal) * 100) / 100;
     
-    if(change >= 0) {
+    if (change >= 0) {
       document.getElementById('cash-change').innerText = `$${change.toFixed(2)}`;
+      document.getElementById('cash-change-detail').innerText = desglosarCambio(change);
       document.getElementById('cash-confirm-btn').disabled = false;
     } else {
       document.getElementById('cash-change').innerText = '$0.00';
+      document.getElementById('cash-change-detail').innerText = '';
       document.getElementById('cash-confirm-btn').disabled = true;
+    }
+
+    // Si el usuario escribe manual, deseleccionar billetes
+    const inputVal = parseFloat(document.getElementById('cash-received').value) || 0;
+    if (cashSelectedDenom !== null && inputVal !== cashSelectedDenom) {
+      document.querySelectorAll('#billetes-grid .billete').forEach(b => b.classList.remove('selected'));
+      cashSelectedDenom = null;
     }
   }
 
@@ -1366,10 +1293,11 @@
     document.getElementById('form-price').value = '';
     document.getElementById('form-price-pg').value = '';
     document.getElementById('form-stock').value = '';
-    setEmoji('🛍️');
-    document.getElementById('emoji-auto-label').textContent = 'Auto-asignado';
-    closeEmojiPicker();
-
+    selectedEmoji = '🛍️';
+    document.getElementById('emoji-display').textContent = '🛍️';
+    document.getElementById('form-emoji').value = '🛍️';
+    document.getElementById('emoji-picker').style.display = 'none';
+    
     const sel = document.getElementById('form-category');
     sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `<option value="${c}">${c}</option>`).join('');
     
@@ -1387,9 +1315,10 @@
     document.getElementById('form-price').value = p.price;
     document.getElementById('form-price-pg').value = p.pricePG != null ? p.pricePG : (Number(p.price||0) + PRICE_DIFF_DEFAULT).toFixed(2);
     document.getElementById('form-stock').value = p.stock;
-    setEmoji(p.emoji || '🛍️');
-    document.getElementById('emoji-auto-label').textContent = 'Ícono guardado';
-    closeEmojiPicker();
+    selectedEmoji = p.emoji || '🛍️';
+    document.getElementById('emoji-display').textContent = selectedEmoji;
+    document.getElementById('form-emoji').value = selectedEmoji;
+    document.getElementById('emoji-picker').style.display = 'none';
     
     const sel = document.getElementById('form-category');
     sel.innerHTML = categories.filter(c => c !== "Todos").map(c => `
